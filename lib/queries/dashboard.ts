@@ -34,23 +34,39 @@ export async function getPeriodSummary(userId: string, range: Range) {
 
 export async function getMonthlySeries(userId: string, months = 8) {
   const now = new Date();
-  const series: { month: string; label: string; receitas: number; despesas: number; saldo: number }[] = [];
+  const rangeFrom = startOfMonth(subMonths(now, months - 1));
+  const rangeTo = endOfMonth(now);
 
+  // Uma única consulta para a janela inteira (em vez de uma consulta por mês)
+  // — evita N round-trips sequenciais contra o banco.
+  const transactions = await prisma.transaction.findMany({
+    where: {
+      userId,
+      type: { in: ["INCOME", "EXPENSE"] },
+      isInvoicePayment: false,
+      status: "PAGO",
+      date: { gte: rangeFrom, lte: rangeTo },
+    },
+    select: { type: true, amount: true, date: true },
+  });
+
+  const buckets = new Map<string, { income: number; expense: number }>();
+  for (const t of transactions) {
+    const key = monthKey(t.date);
+    const bucket = buckets.get(key) ?? { income: 0, expense: 0 };
+    if (t.type === "INCOME") bucket.income += t.amount;
+    else bucket.expense += t.amount;
+    buckets.set(key, bucket);
+  }
+
+  const series: { month: string; label: string; receitas: number; despesas: number; saldo: number }[] = [];
   for (let i = months - 1; i >= 0; i--) {
     const ref = subMonths(now, i);
-    const from = startOfMonth(ref);
-    const to = endOfMonth(ref);
-    const [income, expense] = await Promise.all([
-      sumByType(userId, "INCOME", { from, to }),
-      sumByType(userId, "EXPENSE", { from, to }),
-    ]);
-    series.push({
-      month: monthKey(ref),
-      label: formatMonthLabel(monthKey(ref)),
-      receitas: income,
-      despesas: expense,
-      saldo: round2(income - expense),
-    });
+    const key = monthKey(ref);
+    const bucket = buckets.get(key) ?? { income: 0, expense: 0 };
+    const income = round2(bucket.income);
+    const expense = round2(bucket.expense);
+    series.push({ month: key, label: formatMonthLabel(key), receitas: income, despesas: expense, saldo: round2(income - expense) });
   }
 
   return series;

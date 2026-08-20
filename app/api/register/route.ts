@@ -4,6 +4,8 @@ import { prisma } from "@/lib/prisma";
 import { registerSchema } from "@/lib/validations";
 import { seedDemoData } from "@/lib/seed-demo-data";
 
+export const maxDuration = 60;
+
 export async function POST(req: Request) {
   const body = await req.json();
   const parsed = registerSchema.safeParse(body);
