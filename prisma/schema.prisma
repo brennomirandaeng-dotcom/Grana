@@ -1,0 +1,317 @@
+// Schema do banco de dados — Finanças Pessoais
+// Postgres (ex: Supabase, Neon) — aponte DATABASE_URL para a connection string do seu banco.
+// Os campos "enum" abaixo são String (validados em TypeScript, ver lib/constants.ts) por
+// terem sido originalmente modelados para SQLite — mantido assim por simplicidade e para
+// evitar migrações ALTER TYPE ao ajustar valores permitidos.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ==================== AUTENTICAÇÃO ====================
+
+model User {
+  id            String    @id @default(cuid())
+  name          String
+  email         String    @unique
+  passwordHash  String
+  image         String?
+  currency      String    @default("BRL")
+  locale        String    @default("pt-BR")
+  firstDayOfMonth Int     @default(1)
+  dateFormat    String    @default("dd/MM/yyyy")
+  theme         String    @default("light") // light | dark | auto
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  accounts        Account[]
+  categories      Category[]
+  transactions    Transaction[]
+  creditCards     CreditCard[]
+  installmentPurchases InstallmentPurchase[]
+  recurringTransactions RecurringTransaction[]
+  budgets         Budget[]
+  goals           Goal[]
+  investments     Investment[]
+  assets          Asset[]
+  liabilities     Liability[]
+  invoicePayments InvoicePayment[]
+  netWorthSnapshots NetWorthSnapshot[]
+}
+
+// ==================== CONTAS ====================
+// type: CHECKING | DIGITAL | SAVINGS | CASH | WALLET | INVESTMENT
+
+model Account {
+  id          String      @id @default(cuid())
+  userId      String
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name        String
+  institution String?
+  type        String      @default("CHECKING")
+  initialBalance Float    @default(0)
+  color       String      @default("#10b981")
+  archived    Boolean     @default(false)
+  createdAt   DateTime    @default(now())
+
+  transactions      Transaction[]
+  transfersOut      Transaction[] @relation("TransferFrom")
+  recurringTransactions RecurringTransaction[]
+  invoicePayments   InvoicePayment[]
+}
+
+// ==================== CATEGORIAS ====================
+// kind: INCOME | EXPENSE
+
+model Category {
+  id        String       @id @default(cuid())
+  userId    String
+  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String
+  icon      String       @default("Circle")
+  color     String       @default("#6366f1")
+  kind      String       @default("EXPENSE")
+  parentId  String?
+  parent    Category?    @relation("Subcategories", fields: [parentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  children  Category[]   @relation("Subcategories")
+  createdAt DateTime     @default(now())
+
+  transactions Transaction[]
+  budgets      Budget[]
+  recurringTransactions RecurringTransaction[]
+  installmentPurchases InstallmentPurchase[]
+}
+
+// ==================== LANÇAMENTOS ====================
+// type: INCOME | EXPENSE | TRANSFER
+// paymentMethod: DINHEIRO | PIX | DEBITO | CREDITO | BOLETO | TRANSFERENCIA
+// status: PAGO | PENDENTE | AGENDADO
+
+model Transaction {
+  id          String            @id @default(cuid())
+  userId      String
+  user        User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type        String
+  description String
+  amount      Float
+  date        DateTime
+  categoryId  String?
+  category    Category?         @relation(fields: [categoryId], references: [id])
+  accountId   String?
+  account     Account?          @relation(fields: [accountId], references: [id])
+  transferToAccountId String?
+  transferToAccount   Account?  @relation("TransferFrom", fields: [transferToAccountId], references: [id])
+  paymentMethod String          @default("PIX")
+  status      String            @default("PAGO")
+  notes       String?
+
+  creditCardId String?
+  creditCard   CreditCard?      @relation(fields: [creditCardId], references: [id])
+  invoiceMonth String?          // "YYYY-MM" — fatura a que a compra pertence
+  installmentPurchaseId String?
+  installmentPurchase   InstallmentPurchase? @relation(fields: [installmentPurchaseId], references: [id], onDelete: Cascade)
+  installmentNumber Int?        // parcela atual (1-based)
+
+  recurringTransactionId String?
+  recurringTransaction   RecurringTransaction? @relation(fields: [recurringTransactionId], references: [id], onDelete: SetNull)
+
+  isInvoicePayment Boolean @default(false) // true = lançamento de pagamento de fatura de cartão
+  invoicePaymentCardId String?
+
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  @@index([userId, date])
+  @@index([userId, type])
+  @@index([creditCardId, invoiceMonth])
+}
+
+// ==================== RECORRÊNCIAS ====================
+// frequency: SEMANAL | QUINZENAL | MENSAL | ANUAL
+
+model RecurringTransaction {
+  id          String              @id @default(cuid())
+  userId      String
+  user        User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  description String
+  amount      Float
+  type        String
+  categoryId  String?
+  category    Category?           @relation(fields: [categoryId], references: [id])
+  accountId   String?
+  account     Account?            @relation(fields: [accountId], references: [id])
+  frequency   String              @default("MENSAL")
+  startDate   DateTime
+  endDate     DateTime?
+  occurrences Int?                // número máximo de repetições
+  dayOfMonth  Int?
+  active      Boolean             @default(true)
+  createdAt   DateTime            @default(now())
+
+  transactions Transaction[]
+}
+
+// ==================== CARTÕES DE CRÉDITO ====================
+
+model CreditCard {
+  id             String   @id @default(cuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name           String
+  bank           String
+  limitAmount    Float
+  closingDay     Int
+  dueDay         Int
+  brand          String   @default("outro")
+  color          String   @default("#8b5cf6")
+  archived       Boolean  @default(false)
+  createdAt      DateTime @default(now())
+
+  transactions        Transaction[]
+  installmentPurchases InstallmentPurchase[]
+  invoicePayments      InvoicePayment[]
+}
+
+model InstallmentPurchase {
+  id                String   @id @default(cuid())
+  userId            String
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  creditCardId      String
+  creditCard        CreditCard @relation(fields: [creditCardId], references: [id], onDelete: Cascade)
+  description       String
+  totalAmount       Float
+  installmentsCount Int
+  categoryId        String?
+  category          Category? @relation(fields: [categoryId], references: [id])
+  purchaseDate      DateTime
+  createdAt         DateTime @default(now())
+
+  installments Transaction[]
+}
+
+model InvoicePayment {
+  id           String     @id @default(cuid())
+  userId       String
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  creditCardId String
+  creditCard   CreditCard @relation(fields: [creditCardId], references: [id], onDelete: Cascade)
+  invoiceMonth String     // "YYYY-MM"
+  amountPaid   Float
+  paidDate     DateTime
+  accountId    String?
+  account      Account?   @relation(fields: [accountId], references: [id])
+  createdAt    DateTime   @default(now())
+
+  @@unique([creditCardId, invoiceMonth])
+}
+
+// ==================== ORÇAMENTO ====================
+
+model Budget {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  categoryId String
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  month      String   // "YYYY-MM"
+  limit      Float
+  createdAt  DateTime @default(now())
+
+  @@unique([categoryId, month])
+}
+
+// ==================== METAS ====================
+
+model Goal {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name          String
+  targetAmount  Float
+  currentAmount Float    @default(0)
+  deadline      DateTime?
+  color         String   @default("#f59e0b")
+  icon          String   @default("Target")
+  archived      Boolean  @default(false)
+  createdAt     DateTime @default(now())
+
+  contributions GoalContribution[]
+}
+
+// movementType: DEPOSIT | WITHDRAW
+
+model GoalContribution {
+  id     String           @id @default(cuid())
+  goalId String
+  goal   Goal             @relation(fields: [goalId], references: [id], onDelete: Cascade)
+  amount Float
+  type   String           @default("DEPOSIT")
+  date   DateTime         @default(now())
+  note   String?
+}
+
+// ==================== INVESTIMENTOS ====================
+// category: RENDA_FIXA | TESOURO_DIRETO | CDB | LCI_LCA | ACOES | FIIS | ETF | CRIPTO | OUTROS
+
+model Investment {
+  id             String             @id @default(cuid())
+  userId         String
+  user           User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name           String
+  category       String             @default("OUTROS")
+  investedAmount Float
+  currentAmount  Float
+  date           DateTime
+  notes          String?
+  createdAt      DateTime           @default(now())
+}
+
+// ==================== PATRIMÔNIO ====================
+// type: VEICULO | IMOVEL | OUTRO
+
+model Asset {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String
+  type      String    @default("OUTRO")
+  value     Float
+  date      DateTime  @default(now())
+  createdAt DateTime  @default(now())
+}
+
+// type: EMPRESTIMO | FINANCIAMENTO | PARCELAMENTO | DIVIDA_PESSOAL
+
+model Liability {
+  id                String        @id @default(cuid())
+  userId            String
+  user              User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name              String
+  type              String        @default("EMPRESTIMO")
+  originalAmount    Float
+  remainingAmount   Float
+  installmentsCount Int?
+  installmentsPaid  Int           @default(0)
+  interestRate      Float?
+  dueDate           DateTime?
+  createdAt         DateTime      @default(now())
+}
+
+model NetWorthSnapshot {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date      DateTime
+  assets    Float
+  liabilities Float
+  netWorth  Float
+  createdAt DateTime @default(now())
+
+  @@unique([userId, date])
+}

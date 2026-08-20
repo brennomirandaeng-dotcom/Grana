@@ -1,0 +1,158 @@
+"use server";
+
+import { revalidatePath } from "next/cache";
+import { prisma } from "@/lib/prisma";
+import { requireUser } from "@/lib/session";
+import { transactionSchema } from "@/lib/validations";
+import { getInvoiceMonth } from "@/lib/finance";
+import { z } from "zod";
+
+type TransactionInput = z.infer<typeof transactionSchema> & { creditCardId?: string | null };
+
+function addPeriod(date: Date, frequency: "SEMANAL" | "QUINZENAL" | "MENSAL" | "ANUAL", steps: number) {
+  const d = new Date(date);
+  switch (frequency) {
+    case "SEMANAL":
+      d.setDate(d.getDate() + 7 * steps);
+      break;
+    case "QUINZENAL":
+      d.setDate(d.getDate() + 14 * steps);
+      break;
+    case "MENSAL":
+      d.setMonth(d.getMonth() + steps);
+      break;
+    case "ANUAL":
+      d.setFullYear(d.getFullYear() + steps);
+      break;
+  }
+  return d;
+}
+
+export async function createTransaction(raw: TransactionInput) {
+  const user = await requireUser();
+  const data = transactionSchema.parse(raw);
+
+  let creditCardId: string | null = null;
+  let invoiceMonth: string | null = null;
+  let accountId: string | null = data.accountId ?? null;
+
+  if (data.paymentMethod === "CREDITO" && raw.creditCardId) {
+    const card = await prisma.creditCard.findFirst({ where: { id: raw.creditCardId, userId: user.id } });
+    if (!card) throw new Error("Cartão inválido");
+    creditCardId = card.id;
+    invoiceMonth = getInvoiceMonth(new Date(data.date), card.closingDay);
+    accountId = null; // compra no cartão não afeta saldo da conta
+  }
+
+  if (data.type === "TRANSFER") {
+    if (!data.accountId || !data.transferToAccountId) throw new Error("Selecione as contas de origem e destino");
+    if (data.accountId === data.transferToAccountId) throw new Error("As contas de origem e destino devem ser diferentes");
+  }
+
+  let recurringId: string | null = null;
+  const occurrenceDates: Date[] = [new Date(data.date)];
+
+  if (data.isRecurring && data.recurrence) {
+    const { frequency, endDate, occurrences } = data.recurrence;
+    const recurring = await prisma.recurringTransaction.create({
+      data: {
+        userId: user.id,
+        description: data.description,
+        amount: data.amount,
+        type: data.type,
+        categoryId: data.categoryId || null,
+        accountId,
+        frequency,
+        startDate: new Date(data.date),
+        endDate: endDate ? new Date(endDate) : null,
+        occurrences: occurrences ?? null,
+        dayOfMonth: new Date(data.date).getDate(),
+        active: true,
+      },
+    });
+    recurringId = recurring.id;
+
+    const maxOccurrences = Math.min(occurrences ?? 36, 60);
+    for (let i = 1; i < maxOccurrences; i++) {
+      const next = addPeriod(new Date(data.date), frequency, i);
+      if (endDate && next > new Date(endDate)) break;
+      occurrenceDates.push(next);
+    }
+  }
+
+  await prisma.$transaction(
+    occurrenceDates.map((date) =>
+      prisma.transaction.create({
+        data: {
+          userId: user.id,
+          type: data.type,
+          description: data.description,
+          amount: data.amount,
+          date,
+          categoryId: data.categoryId || null,
+          accountId: data.type === "TRANSFER" ? data.accountId : accountId,
+          transferToAccountId: data.type === "TRANSFER" ? data.transferToAccountId : null,
+          paymentMethod: data.paymentMethod,
+          status: data.status,
+          notes: data.notes || null,
+          creditCardId,
+          invoiceMonth,
+          recurringTransactionId: recurringId,
+        },
+      })
+    )
+  );
+
+  revalidatePath("/", "layout");
+}
+
+export async function updateTransaction(id: string, raw: TransactionInput) {
+  const user = await requireUser();
+  const data = transactionSchema.parse(raw);
+  const existing = await prisma.transaction.findFirst({ where: { id, userId: user.id } });
+  if (!existing) throw new Error("Lançamento não encontrado");
+
+  let creditCardId: string | null = null;
+  let invoiceMonth: string | null = null;
+  let accountId: string | null = data.accountId ?? null;
+
+  if (data.paymentMethod === "CREDITO" && raw.creditCardId) {
+    const card = await prisma.creditCard.findFirst({ where: { id: raw.creditCardId, userId: user.id } });
+    if (!card) throw new Error("Cartão inválido");
+    creditCardId = card.id;
+    invoiceMonth = getInvoiceMonth(new Date(data.date), card.closingDay);
+    accountId = null;
+  }
+
+  await prisma.transaction.update({
+    where: { id },
+    data: {
+      type: data.type,
+      description: data.description,
+      amount: data.amount,
+      date: new Date(data.date),
+      categoryId: data.categoryId || null,
+      accountId: data.type === "TRANSFER" ? data.accountId : accountId,
+      transferToAccountId: data.type === "TRANSFER" ? data.transferToAccountId : null,
+      paymentMethod: data.paymentMethod,
+      status: data.status,
+      notes: data.notes || null,
+      creditCardId,
+      invoiceMonth,
+    },
+  });
+
+  revalidatePath("/", "layout");
+}
+
+export async function deleteTransaction(id: string) {
+  const user = await requireUser();
+  await prisma.transaction.deleteMany({ where: { id, userId: user.id } });
+  revalidatePath("/", "layout");
+}
+
+export async function toggleTransactionStatus(id: string, status: "PAGO" | "PENDENTE" | "AGENDADO") {
+  const user = await requireUser();
+  await prisma.transaction.updateMany({ where: { id, userId: user.id }, data: { status } });
+  revalidatePath("/", "layout");
+}

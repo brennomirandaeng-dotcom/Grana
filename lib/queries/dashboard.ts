@@ -1,0 +1,97 @@
+import { prisma } from "@/lib/prisma";
+import { round2 } from "@/lib/finance";
+import { monthKey, formatMonthLabel } from "@/lib/format";
+import { type Range, getPreviousRange } from "@/lib/queries/period";
+import { subMonths, startOfMonth, endOfMonth } from "date-fns";
+
+async function sumByType(userId: string, type: "INCOME" | "EXPENSE", range: Range) {
+  const result = await prisma.transaction.aggregate({
+    where: { userId, type, isInvoicePayment: false, status: "PAGO", date: { gte: range.from, lte: range.to } },
+    _sum: { amount: true },
+  });
+  return round2(result._sum.amount ?? 0);
+}
+
+export async function getPeriodSummary(userId: string, range: Range) {
+  const prevRange = getPreviousRange(range);
+
+  const [income, expense, prevIncome, prevExpense] = await Promise.all([
+    sumByType(userId, "INCOME", range),
+    sumByType(userId, "EXPENSE", range),
+    sumByType(userId, "INCOME", prevRange),
+    sumByType(userId, "EXPENSE", prevRange),
+  ]);
+
+  return {
+    income,
+    expense,
+    result: round2(income - expense),
+    prevIncome,
+    prevExpense,
+    prevResult: round2(prevIncome - prevExpense),
+  };
+}
+
+export async function getMonthlySeries(userId: string, months = 8) {
+  const now = new Date();
+  const series: { month: string; label: string; receitas: number; despesas: number; saldo: number }[] = [];
+
+  for (let i = months - 1; i >= 0; i--) {
+    const ref = subMonths(now, i);
+    const from = startOfMonth(ref);
+    const to = endOfMonth(ref);
+    const [income, expense] = await Promise.all([
+      sumByType(userId, "INCOME", { from, to }),
+      sumByType(userId, "EXPENSE", { from, to }),
+    ]);
+    series.push({
+      month: monthKey(ref),
+      label: formatMonthLabel(monthKey(ref)),
+      receitas: income,
+      despesas: expense,
+      saldo: round2(income - expense),
+    });
+  }
+
+  return series;
+}
+
+export async function getExpensesByCategory(userId: string, range: Range) {
+  const transactions = await prisma.transaction.findMany({
+    where: { userId, type: "EXPENSE", isInvoicePayment: false, status: "PAGO", date: { gte: range.from, lte: range.to } },
+    include: { category: true },
+  });
+
+  const map = new Map<string, { id: string; name: string; color: string; total: number; count: number }>();
+  let totalExpense = 0;
+
+  for (const t of transactions) {
+    totalExpense += t.amount;
+    const key = t.category?.id ?? "sem-categoria";
+    const name = t.category?.name ?? "Sem categoria";
+    const color = t.category?.color ?? "#94a3b8";
+    const entry = map.get(key) ?? { id: key, name, color, total: 0, count: 0 };
+    entry.total = round2(entry.total + t.amount);
+    entry.count += 1;
+    map.set(key, entry);
+  }
+
+  const categories = Array.from(map.values())
+    .sort((a, b) => b.total - a.total)
+    .map((c) => ({ ...c, percent: totalExpense > 0 ? round2((c.total / totalExpense) * 100) : 0 }));
+
+  return { categories, totalExpense: round2(totalExpense) };
+}
+
+export async function getUpcomingItems(userId: string, days = 14) {
+  const from = new Date();
+  const to = new Date();
+  to.setDate(to.getDate() + days);
+
+  return prisma.transaction.findMany({
+    where: { userId, status: { in: ["PENDENTE", "AGENDADO"] }, date: { gte: from, lte: to } },
+    include: { category: true, account: true, creditCard: true, installmentPurchase: true, transferToAccount: true },
+    orderBy: { date: "asc" },
+    take: 8,
+  });
+}
