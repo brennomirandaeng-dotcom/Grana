@@ -1,6 +1,6 @@
 "use client";
 import * as React from "react";
-import { useRouter } from "next/navigation";
+import { useActionRefresh } from "@/hooks/use-action-refresh";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,7 +19,7 @@ interface GoalModalProps {
 }
 
 export function GoalModal({ open, onOpenChange, goal }: GoalModalProps) {
-  const router = useRouter();
+  const { refresh } = useActionRefresh();
   const [name, setName] = React.useState("");
   const [targetAmount, setTargetAmount] = React.useState(0);
   const [currentAmount, setCurrentAmount] = React.useState(0);
@@ -60,7 +60,7 @@ export function GoalModal({ open, onOpenChange, goal }: GoalModalProps) {
         toast({ title: "Meta criada", variant: "success" });
       }
       onOpenChange(false);
-      router.refresh();
+      refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao salvar meta");
     } finally {

@@ -1,6 +1,7 @@
 "use client";
 import * as React from "react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
+import { useActionRefresh } from "@/hooks/use-action-refresh";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Money } from "@/components/shared/money";
@@ -47,7 +48,7 @@ function SortHeader({ field, label }: { field: string; label: string }) {
 }
 
 export function TransactionsTable({ transactions }: { transactions: TransactionWithRelations[] }) {
-  const router = useRouter();
+  const { refresh } = useActionRefresh();
   const { openEdit, open } = useQuickAdd();
   const [deletingId, setDeletingId] = React.useState<string | null>(null);
   const [deleting, setDeleting] = React.useState(false);
@@ -58,7 +59,7 @@ export function TransactionsTable({ transactions }: { transactions: TransactionW
     try {
       await deleteTransaction(deletingId);
       toast({ title: "Lançamento excluído", variant: "success" });
-      router.refresh();
+      refresh();
     } catch {
       toast({ title: "Erro ao excluir", variant: "destructive" });
     } finally {

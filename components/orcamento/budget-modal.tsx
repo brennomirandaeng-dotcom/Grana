@@ -1,6 +1,6 @@
 "use client";
 import * as React from "react";
-import { useRouter } from "next/navigation";
+import { useActionRefresh } from "@/hooks/use-action-refresh";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -23,7 +23,7 @@ export function BudgetModal({
   categories: { id: string; name: string }[];
   existingCategoryIds: string[];
 }) {
-  const router = useRouter();
+  const { refresh } = useActionRefresh();
   const [categoryId, setCategoryId] = React.useState("");
   const [limit, setLimit] = React.useState(0);
   const [saving, setSaving] = React.useState(false);
@@ -47,7 +47,7 @@ export function BudgetModal({
       await upsertBudget({ categoryId, month, limit });
       toast({ title: "Orçamento definido", variant: "success" });
       onOpenChange(false);
-      router.refresh();
+      refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao salvar orçamento");
     } finally {

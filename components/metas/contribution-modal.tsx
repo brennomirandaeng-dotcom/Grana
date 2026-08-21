@@ -1,6 +1,6 @@
 "use client";
 import * as React from "react";
-import { useRouter } from "next/navigation";
+import { useActionRefresh } from "@/hooks/use-action-refresh";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -12,7 +12,7 @@ import { toast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 
 export function ContributionModal({ open, onOpenChange, goalId, goalName }: { open: boolean; onOpenChange: (o: boolean) => void; goalId: string; goalName: string }) {
-  const router = useRouter();
+  const { refresh } = useActionRefresh();
   const [type, setType] = React.useState<"DEPOSIT" | "WITHDRAW">("DEPOSIT");
   const [amount, setAmount] = React.useState(0);
   const [note, setNote] = React.useState("");
@@ -36,7 +36,7 @@ export function ContributionModal({ open, onOpenChange, goalId, goalName }: { op
       await addGoalContribution(goalId, { amount, type, note: note || null });
       toast({ title: type === "DEPOSIT" ? "Depósito adicionado" : "Retirada registrada", variant: "success" });
       onOpenChange(false);
-      router.refresh();
+      refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao registrar movimento");
     } finally {

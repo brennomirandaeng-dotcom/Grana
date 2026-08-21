@@ -1,6 +1,6 @@
 "use client";
 import * as React from "react";
-import { useRouter } from "next/navigation";
+import { useActionRefresh } from "@/hooks/use-action-refresh";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,7 +13,7 @@ import { toast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 
 export function AssetModal({ open, onOpenChange, asset }: { open: boolean; onOpenChange: (o: boolean) => void; asset?: { id: string; name: string; type: string; value: number } | null }) {
-  const router = useRouter();
+  const { refresh } = useActionRefresh();
   const [name, setName] = React.useState("");
   const [type, setType] = React.useState("OUTRO");
   const [value, setValue] = React.useState(0);
@@ -48,7 +48,7 @@ export function AssetModal({ open, onOpenChange, asset }: { open: boolean; onOpe
         toast({ title: "Bem adicionado", variant: "success" });
       }
       onOpenChange(false);
-      router.refresh();
+      refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao salvar");
     } finally {

@@ -1,6 +1,6 @@
 "use client";
 import * as React from "react";
-import { useRouter } from "next/navigation";
+import { useActionRefresh } from "@/hooks/use-action-refresh";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,7 +19,7 @@ interface InvestmentModalProps {
 }
 
 export function InvestmentModal({ open, onOpenChange, investment }: InvestmentModalProps) {
-  const router = useRouter();
+  const { refresh } = useActionRefresh();
   const [name, setName] = React.useState("");
   const [category, setCategory] = React.useState("RENDA_FIXA");
   const [investedAmount, setInvestedAmount] = React.useState(0);
@@ -63,7 +63,7 @@ export function InvestmentModal({ open, onOpenChange, investment }: InvestmentMo
         toast({ title: "Investimento adicionado", variant: "success" });
       }
       onOpenChange(false);
-      router.refresh();
+      refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao salvar investimento");
     } finally {

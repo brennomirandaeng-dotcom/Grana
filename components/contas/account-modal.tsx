@@ -1,6 +1,6 @@
 "use client";
 import * as React from "react";
-import { useRouter } from "next/navigation";
+import { useActionRefresh } from "@/hooks/use-action-refresh";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,7 +21,7 @@ interface AccountModalProps {
 }
 
 export function AccountModal({ open, onOpenChange, account }: AccountModalProps) {
-  const router = useRouter();
+  const { refresh } = useActionRefresh();
   const [name, setName] = React.useState("");
   const [institution, setInstitution] = React.useState("");
   const [type, setType] = React.useState("CHECKING");
@@ -62,7 +62,7 @@ export function AccountModal({ open, onOpenChange, account }: AccountModalProps)
         toast({ title: "Conta criada", variant: "success" });
       }
       onOpenChange(false);
-      router.refresh();
+      refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao salvar conta");
     } finally {

@@ -1,6 +1,6 @@
 "use client";
 import * as React from "react";
-import { useRouter } from "next/navigation";
+import { useActionRefresh } from "@/hooks/use-action-refresh";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -32,7 +32,7 @@ function monthsUntil(deadline: Date) {
 }
 
 export function GoalsList({ goals }: { goals: GoalRow[] }) {
-  const router = useRouter();
+  const { refresh } = useActionRefresh();
   const [modalOpen, setModalOpen] = React.useState(false);
   const [editing, setEditing] = React.useState<GoalRow | null>(null);
   const [contributingGoal, setContributingGoal] = React.useState<GoalRow | null>(null);
@@ -44,7 +44,7 @@ export function GoalsList({ goals }: { goals: GoalRow[] }) {
     try {
       await archiveGoal(id, archived);
       toast({ title: archived ? "Meta arquivada" : "Meta reativada", variant: "success" });
-      router.refresh();
+      refresh();
     } finally {
       setBusy(false);
     }
@@ -56,7 +56,7 @@ export function GoalsList({ goals }: { goals: GoalRow[] }) {
     try {
       await deleteGoal(deletingId);
       toast({ title: "Meta excluída", variant: "success" });
-      router.refresh();
+      refresh();
     } finally {
       setBusy(false);
       setDeletingId(null);

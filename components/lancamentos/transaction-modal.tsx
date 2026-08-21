@@ -1,6 +1,6 @@
 "use client";
 import * as React from "react";
-import { useRouter } from "next/navigation";
+import { useActionRefresh } from "@/hooks/use-action-refresh";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -48,7 +48,7 @@ function todayISO() {
 }
 
 export function TransactionModal({ open, onOpenChange, defaultType, editing }: TransactionModalProps) {
-  const router = useRouter();
+  const { refresh } = useActionRefresh();
   const [accounts, setAccounts] = React.useState<Account[]>([]);
   const [categories, setCategories] = React.useState<Category[]>([]);
   const [cards, setCards] = React.useState<CreditCard[]>([]);
@@ -161,7 +161,7 @@ export function TransactionModal({ open, onOpenChange, defaultType, editing }: T
         if (type === "INCOME") playCashRegisterSound();
       }
       onOpenChange(false);
-      router.refresh();
+      refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Não foi possível salvar o lançamento");
     } finally {
@@ -177,7 +177,7 @@ export function TransactionModal({ open, onOpenChange, defaultType, editing }: T
       toast({ title: "Lançamento excluído", variant: "success" });
       setConfirmDeleteOpen(false);
       onOpenChange(false);
-      router.refresh();
+      refresh();
     } catch {
       toast({ title: "Erro ao excluir", variant: "destructive" });
     } finally {

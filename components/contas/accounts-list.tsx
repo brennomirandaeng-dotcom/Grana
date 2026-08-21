@@ -1,6 +1,6 @@
 "use client";
 import * as React from "react";
-import { useRouter } from "next/navigation";
+import { useActionRefresh } from "@/hooks/use-action-refresh";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -28,7 +28,7 @@ export interface AccountRow {
 }
 
 export function AccountsList({ accounts }: { accounts: AccountRow[] }) {
-  const router = useRouter();
+  const { refresh } = useActionRefresh();
   const [modalOpen, setModalOpen] = React.useState(false);
   const [transferOpen, setTransferOpen] = React.useState(false);
   const [editing, setEditing] = React.useState<AccountRow | null>(null);
@@ -43,7 +43,7 @@ export function AccountsList({ accounts }: { accounts: AccountRow[] }) {
     try {
       await archiveAccount(id, archived);
       toast({ title: archived ? "Conta arquivada" : "Conta reativada", variant: "success" });
-      router.refresh();
+      refresh();
     } finally {
       setBusy(false);
     }
@@ -55,7 +55,7 @@ export function AccountsList({ accounts }: { accounts: AccountRow[] }) {
     try {
       await deleteAccount(deletingId);
       toast({ title: "Conta excluída", variant: "success" });
-      router.refresh();
+      refresh();
     } catch (err) {
       toast({ title: err instanceof Error ? err.message : "Erro ao excluir", variant: "destructive" });
     } finally {

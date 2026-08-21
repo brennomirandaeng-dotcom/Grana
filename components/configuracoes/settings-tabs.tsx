@@ -1,6 +1,6 @@
 "use client";
 import * as React from "react";
-import { useRouter } from "next/navigation";
+import { useActionRefresh } from "@/hooks/use-action-refresh";
 import { signOut } from "next-auth/react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
@@ -51,7 +51,7 @@ export function SettingsTabs({ user }: { user: UserData }) {
 }
 
 function ProfileTab({ user }: { user: UserData }) {
-  const router = useRouter();
+  const { refresh } = useActionRefresh();
   const [name, setName] = React.useState(user.name);
   const [saving, setSaving] = React.useState(false);
   const initials = user.name.split(" ").slice(0, 2).map((p) => p[0]?.toUpperCase()).join("");
@@ -62,7 +62,7 @@ function ProfileTab({ user }: { user: UserData }) {
     try {
       await updateProfile({ name });
       toast({ title: "Perfil atualizado", variant: "success" });
-      router.refresh();
+      refresh();
     } catch {
       toast({ title: "Erro ao atualizar perfil", variant: "destructive" });
     } finally {
@@ -103,7 +103,7 @@ function ProfileTab({ user }: { user: UserData }) {
 }
 
 function PreferencesTab({ user }: { user: UserData }) {
-  const router = useRouter();
+  const { refresh } = useActionRefresh();
   const [firstDayOfMonth, setFirstDayOfMonth] = React.useState(String(user.firstDayOfMonth));
   const [dateFormat, setDateFormat] = React.useState(user.dateFormat);
   const [saving, setSaving] = React.useState(false);
@@ -114,7 +114,7 @@ function PreferencesTab({ user }: { user: UserData }) {
     try {
       await updatePreferences({ currency: "BRL", firstDayOfMonth: Number(firstDayOfMonth), dateFormat });
       toast({ title: "Preferências salvas", variant: "success" });
-      router.refresh();
+      refresh();
     } catch {
       toast({ title: "Erro ao salvar preferências", variant: "destructive" });
     } finally {

@@ -1,7 +1,7 @@
 "use client";
 import * as React from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useActionRefresh } from "@/hooks/use-action-refresh";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -30,7 +30,7 @@ export interface CardRow {
 }
 
 export function CreditCardsList({ cards, categories }: { cards: CardRow[]; categories: { id: string; name: string }[] }) {
-  const router = useRouter();
+  const { refresh } = useActionRefresh();
   const [modalOpen, setModalOpen] = React.useState(false);
   const [purchaseOpen, setPurchaseOpen] = React.useState(false);
   const [editing, setEditing] = React.useState<CardRow | null>(null);
@@ -42,7 +42,7 @@ export function CreditCardsList({ cards, categories }: { cards: CardRow[]; categ
     try {
       await archiveCreditCard(id, archived);
       toast({ title: archived ? "Cartão arquivado" : "Cartão reativado", variant: "success" });
-      router.refresh();
+      refresh();
     } finally {
       setBusy(false);
     }
@@ -54,7 +54,7 @@ export function CreditCardsList({ cards, categories }: { cards: CardRow[]; categ
     try {
       await deleteCreditCard(deletingId);
       toast({ title: "Cartão excluído", variant: "success" });
-      router.refresh();
+      refresh();
     } catch (err) {
       toast({ title: err instanceof Error ? err.message : "Erro ao excluir", variant: "destructive" });
     } finally {

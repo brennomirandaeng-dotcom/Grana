@@ -1,6 +1,6 @@
 "use client";
 import * as React from "react";
-import { useRouter } from "next/navigation";
+import { useActionRefresh } from "@/hooks/use-action-refresh";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -34,7 +34,7 @@ export function InstallmentPurchaseModal({
   categories: CategoryOption[];
   defaultCardId?: string;
 }) {
-  const router = useRouter();
+  const { refresh } = useActionRefresh();
   const [creditCardId, setCreditCardId] = React.useState(defaultCardId ?? "");
   const [description, setDescription] = React.useState("");
   const [totalAmount, setTotalAmount] = React.useState(0);
@@ -74,7 +74,7 @@ export function InstallmentPurchaseModal({
       });
       toast({ title: "Compra parcelada registrada", variant: "success" });
       onOpenChange(false);
-      router.refresh();
+      refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao registrar compra");
     } finally {

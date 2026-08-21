@@ -1,6 +1,6 @@
 "use client";
 import * as React from "react";
-import { useRouter } from "next/navigation";
+import { useActionRefresh } from "@/hooks/use-action-refresh";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,7 +26,7 @@ export function PayInvoiceModal({
   suggestedAmount: number;
   accounts: { id: string; name: string }[];
 }) {
-  const router = useRouter();
+  const { refresh } = useActionRefresh();
   const [accountId, setAccountId] = React.useState("");
   const [amount, setAmount] = React.useState(suggestedAmount);
   const [paidDate, setPaidDate] = React.useState(() => new Date().toISOString().slice(0, 10));
@@ -50,7 +50,7 @@ export function PayInvoiceModal({
       await payInvoice(creditCardId, invoiceMonth, accountId, amount, paidDate);
       toast({ title: "Fatura paga", variant: "success" });
       onOpenChange(false);
-      router.refresh();
+      refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao pagar fatura");
     } finally {

@@ -1,6 +1,6 @@
 "use client";
 import * as React from "react";
-import { useRouter } from "next/navigation";
+import { useActionRefresh } from "@/hooks/use-action-refresh";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,7 +31,7 @@ interface CategoryModalProps {
 }
 
 export function CategoryModal({ open, onOpenChange, category, parentCandidates, defaultParentId }: CategoryModalProps) {
-  const router = useRouter();
+  const { refresh } = useActionRefresh();
   const [name, setName] = React.useState("");
   const [kind, setKind] = React.useState<"INCOME" | "EXPENSE">("EXPENSE");
   const [icon, setIcon] = React.useState("Circle");
@@ -74,7 +74,7 @@ export function CategoryModal({ open, onOpenChange, category, parentCandidates, 
         toast({ title: "Categoria criada", variant: "success" });
       }
       onOpenChange(false);
-      router.refresh();
+      refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao salvar categoria");
     } finally {

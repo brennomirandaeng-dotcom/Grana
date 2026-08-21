@@ -5,13 +5,14 @@
 :root {
   --background: #ffffff;
   --surface: #ffffff;
-  --surface-muted: #f8fafc;
-  --border: #e2e8f0;
-  --foreground: #0f172a;
-  --muted-foreground: #64748b;
+  --surface-muted: #f4f4f5;
+  --border: #e4e4e7;
+  --foreground: #333333;
+  --muted-foreground: #6b6b6f;
 
-  --brand: #0f172a;
-  --brand-foreground: #ffffff;
+  /* Identidade: cinza #333333 + verde #4DAAA7 */
+  --brand: #4daaa7;
+  --brand-foreground: #17221f;
 
   --positive: #16a34a;
   --positive-bg: #f0fdf4;
@@ -19,22 +20,23 @@
   --negative-bg: #fef2f2;
   --warning: #d97706;
   --warning-bg: #fffbeb;
-  --info: #2563eb;
-  --info-bg: #eff6ff;
+  /* "info" fica neutro (cinza) para não reintroduzir azul na paleta */
+  --info: #52525b;
+  --info-bg: #f4f4f5;
 
   --radius: 0.75rem;
 }
 
 .dark {
-  --background: #0b0f17;
-  --surface: #111827;
-  --surface-muted: #0f172a;
-  --border: #1f2937;
-  --foreground: #f1f5f9;
-  --muted-foreground: #94a3b8;
+  --background: #18181a;
+  --surface: #222224;
+  --surface-muted: #1c1c1e;
+  --border: #333336;
+  --foreground: #f4f4f5;
+  --muted-foreground: #a3a3a6;
 
-  --brand: #f1f5f9;
-  --brand-foreground: #0f172a;
+  --brand: #4daaa7;
+  --brand-foreground: #0f1716;
 
   --positive: #4ade80;
   --positive-bg: rgba(74, 222, 128, 0.12);
@@ -42,8 +44,8 @@
   --negative-bg: rgba(248, 113, 113, 0.12);
   --warning: #fbbf24;
   --warning-bg: rgba(251, 191, 36, 0.12);
-  --info: #60a5fa;
-  --info-bg: rgba(96, 165, 250, 0.12);
+  --info: #a1a1aa;
+  --info-bg: rgba(161, 161, 170, 0.12);
 }
 
 @theme inline {
@@ -88,4 +90,19 @@ body {
 
 .scrollbar-none::-webkit-scrollbar {
   display: none;
+}
+
+@keyframes loading-bar-slide {
+  0% {
+    transform: translateX(-100%);
+  }
+  50% {
+    transform: translateX(20%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+.animate-loading-bar {
+  animation: loading-bar-slide 1.1s ease-in-out infinite;
 }

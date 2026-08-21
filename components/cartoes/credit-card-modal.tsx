@@ -1,6 +1,6 @@
 "use client";
 import * as React from "react";
-import { useRouter } from "next/navigation";
+import { useActionRefresh } from "@/hooks/use-action-refresh";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,7 +19,7 @@ interface CardModalProps {
 }
 
 export function CreditCardModal({ open, onOpenChange, card }: CardModalProps) {
-  const router = useRouter();
+  const { refresh } = useActionRefresh();
   const [name, setName] = React.useState("");
   const [bank, setBank] = React.useState("");
   const [limitAmount, setLimitAmount] = React.useState(0);
@@ -66,7 +66,7 @@ export function CreditCardModal({ open, onOpenChange, card }: CardModalProps) {
         toast({ title: "Cartão criado", variant: "success" });
       }
       onOpenChange(false);
-      router.refresh();
+      refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao salvar cartão");
     } finally {

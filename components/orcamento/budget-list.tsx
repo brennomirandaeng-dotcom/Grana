@@ -1,6 +1,6 @@
 "use client";
 import * as React from "react";
-import { useRouter } from "next/navigation";
+import { useActionRefresh } from "@/hooks/use-action-refresh";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -25,7 +25,7 @@ export interface BudgetRow {
 }
 
 export function BudgetList({ budgets, month, categories }: { budgets: BudgetRow[]; month: string; categories: { id: string; name: string }[] }) {
-  const router = useRouter();
+  const { refresh } = useActionRefresh();
   const [modalOpen, setModalOpen] = React.useState(false);
   const [deletingId, setDeletingId] = React.useState<string | null>(null);
   const [busy, setBusy] = React.useState(false);
@@ -39,7 +39,7 @@ export function BudgetList({ budgets, month, categories }: { budgets: BudgetRow[
     try {
       await deleteBudget(deletingId);
       toast({ title: "Orçamento removido", variant: "success" });
-      router.refresh();
+      refresh();
     } finally {
       setBusy(false);
       setDeletingId(null);

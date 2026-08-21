@@ -1,6 +1,6 @@
 "use client";
 import * as React from "react";
-import { useRouter } from "next/navigation";
+import { useActionRefresh } from "@/hooks/use-action-refresh";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/shared/empty-state";
@@ -44,7 +44,7 @@ export function NetWorthView({
   assets: AssetRow[];
   liabilities: LiabilityRow[];
 }) {
-  const router = useRouter();
+  const { refresh } = useActionRefresh();
   const [assetModalOpen, setAssetModalOpen] = React.useState(false);
   const [editingAsset, setEditingAsset] = React.useState<AssetRow | null>(null);
   const [liabilityModalOpen, setLiabilityModalOpen] = React.useState(false);
@@ -59,7 +59,7 @@ export function NetWorthView({
       if (deleting.kind === "asset") await deleteAsset(deleting.id);
       else await deleteLiability(deleting.id);
       toast({ title: "Removido com sucesso", variant: "success" });
-      router.refresh();
+      refresh();
     } finally {
       setBusy(false);
       setDeleting(null);

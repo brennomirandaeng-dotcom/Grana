@@ -1,6 +1,6 @@
 "use client";
 import * as React from "react";
-import { useRouter } from "next/navigation";
+import { useActionRefresh } from "@/hooks/use-action-refresh";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -24,7 +24,7 @@ export interface CategoryRow {
 }
 
 export function CategoriesList({ categories }: { categories: CategoryRow[] }) {
-  const router = useRouter();
+  const { refresh } = useActionRefresh();
   const [kind, setKind] = React.useState<"EXPENSE" | "INCOME">("EXPENSE");
   const [modalOpen, setModalOpen] = React.useState(false);
   const [editing, setEditing] = React.useState<CategoryRow | null>(null);
@@ -42,7 +42,7 @@ export function CategoriesList({ categories }: { categories: CategoryRow[] }) {
     try {
       await deleteCategory(deletingId);
       toast({ title: "Categoria excluída", variant: "success" });
-      router.refresh();
+      refresh();
     } catch (err) {
       toast({ title: err instanceof Error ? err.message : "Erro ao excluir", variant: "destructive" });
     } finally {

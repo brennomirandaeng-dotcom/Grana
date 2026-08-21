@@ -1,6 +1,6 @@
 "use client";
 import * as React from "react";
-import { useRouter } from "next/navigation";
+import { useActionRefresh } from "@/hooks/use-action-refresh";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
@@ -28,7 +28,7 @@ export interface InvestmentRow {
 }
 
 export function InvestmentsList({ investments }: { investments: InvestmentRow[] }) {
-  const router = useRouter();
+  const { refresh } = useActionRefresh();
   const [modalOpen, setModalOpen] = React.useState(false);
   const [editing, setEditing] = React.useState<InvestmentRow | null>(null);
   const [deletingId, setDeletingId] = React.useState<string | null>(null);
@@ -52,7 +52,7 @@ export function InvestmentsList({ investments }: { investments: InvestmentRow[] 
     try {
       await deleteInvestment(deletingId);
       toast({ title: "Investimento excluído", variant: "success" });
-      router.refresh();
+      refresh();
     } finally {
       setBusy(false);
       setDeletingId(null);
