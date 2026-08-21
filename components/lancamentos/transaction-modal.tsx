@@ -12,6 +12,7 @@ import { CurrencyInput } from "@/components/shared/currency-input";
 import { PAYMENT_METHODS, TRANSACTION_STATUSES, RECURRENCE_FREQUENCIES, type PaymentMethod, type TransactionStatus, type RecurrenceFrequency } from "@/lib/constants";
 import { createTransaction, updateTransaction, deleteTransaction } from "@/lib/actions/transactions";
 import { toast } from "@/hooks/use-toast";
+import { playCashRegisterSound } from "@/lib/sound";
 import type { TransactionWithRelations } from "@/lib/queries/transactions";
 import { Loader2, Trash2 } from "lucide-react";
 import { ConfirmationModal } from "@/components/shared/confirmation-modal";
@@ -157,6 +158,7 @@ export function TransactionModal({ open, onOpenChange, defaultType, editing }: T
       } else {
         await createTransaction(payload);
         toast({ title: "Lançamento criado", variant: "success" });
+        if (type === "INCOME") playCashRegisterSound();
       }
       onOpenChange(false);
       router.refresh();
