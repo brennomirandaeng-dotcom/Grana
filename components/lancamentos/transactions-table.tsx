@@ -47,7 +47,7 @@ function SortHeader({ field, label }: { field: string; label: string }) {
   );
 }
 
-export function TransactionsTable({ transactions }: { transactions: TransactionWithRelations[] }) {
+export function TransactionsTable({ transactions, hasFilters }: { transactions: TransactionWithRelations[]; hasFilters?: boolean }) {
   const { refresh } = useActionRefresh();
   const { openEdit, open } = useQuickAdd();
   const [deletingId, setDeletingId] = React.useState<string | null>(null);
@@ -72,12 +72,18 @@ export function TransactionsTable({ transactions }: { transactions: TransactionW
     return (
       <EmptyState
         icon={Receipt}
-        title="Você ainda não possui lançamentos"
-        description="Registre suas receitas e despesas para acompanhar sua vida financeira."
+        title={hasFilters ? "Nenhum lançamento encontrado" : "Você ainda não possui lançamentos"}
+        description={
+          hasFilters
+            ? "Tente outro período ou ajuste os filtros aplicados."
+            : "Registre suas receitas e despesas para acompanhar sua vida financeira."
+        }
         action={
-          <Button onClick={() => open("EXPENSE")}>
-            <Receipt className="h-4 w-4" /> Adicionar lançamento
-          </Button>
+          !hasFilters && (
+            <Button onClick={() => open("EXPENSE")}>
+              <Receipt className="h-4 w-4" /> Adicionar lançamento
+            </Button>
+          )
         }
       />
     );
