@@ -138,7 +138,11 @@ export function TransactionsTable({ transactions }: { transactions: TransactionW
                   )}
                 </TableCell>
                 <TableCell className="text-muted-foreground">
-                  {t.type === "TRANSFER" ? `${t.account?.name} → ${t.transferToAccount?.name}` : t.creditCard ? `${t.creditCard.name} (cartão)` : t.account?.name ?? "—"}
+                  {t.type === "TRANSFER"
+                    ? `${t.account?.name ?? "Investimento"} → ${t.transferToAccount?.name}`
+                    : t.creditCard
+                      ? `${t.creditCard.name} (cartão)`
+                      : t.account?.name ?? "—"}
                 </TableCell>
                 <TableCell className="text-muted-foreground">{PAYMENT_METHODS[t.paymentMethod as keyof typeof PAYMENT_METHODS] ?? t.paymentMethod}</TableCell>
                 <TableCell className="text-right">
@@ -185,7 +189,9 @@ export function TransactionsTable({ transactions }: { transactions: TransactionW
             </div>
             <div className="flex items-center gap-2 mt-2">
               <Badge variant={statusVariant[t.status] ?? "default"}>{TRANSACTION_STATUSES[t.status as keyof typeof TRANSACTION_STATUSES] ?? t.status}</Badge>
-              <span className="text-xs text-muted-foreground">{t.account?.name ?? t.creditCard?.name ?? "—"}</span>
+              <span className="text-xs text-muted-foreground">
+                {t.type === "TRANSFER" ? `${t.account?.name ?? "Investimento"} → ${t.transferToAccount?.name}` : t.account?.name ?? t.creditCard?.name ?? "—"}
+              </span>
             </div>
           </button>
         ))}

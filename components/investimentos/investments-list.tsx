@@ -8,13 +8,14 @@ import { Money } from "@/components/shared/money";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ConfirmationModal } from "@/components/shared/confirmation-modal";
 import { InvestmentModal } from "@/components/investimentos/investment-modal";
+import { WithdrawModal } from "@/components/investimentos/withdraw-modal";
 import { PortfolioChart } from "@/components/investimentos/portfolio-chart";
 import { deleteInvestment } from "@/lib/actions/investments";
 import { toast } from "@/hooks/use-toast";
 import { INVESTMENT_CATEGORIES } from "@/lib/constants";
 import { formatCurrency, formatPercent } from "@/lib/format";
 import { round2 } from "@/lib/finance";
-import { TrendingUp, Plus, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import { TrendingUp, Plus, MoreHorizontal, Pencil, Trash2, ArrowDownToLine } from "lucide-react";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 
 export interface InvestmentRow {
@@ -32,6 +33,7 @@ export function InvestmentsList({ investments }: { investments: InvestmentRow[] 
   const [modalOpen, setModalOpen] = React.useState(false);
   const [editing, setEditing] = React.useState<InvestmentRow | null>(null);
   const [deletingId, setDeletingId] = React.useState<string | null>(null);
+  const [withdrawing, setWithdrawing] = React.useState<InvestmentRow | null>(null);
   const [busy, setBusy] = React.useState(false);
 
   const totalInvested = round2(investments.reduce((s, i) => s + i.investedAmount, 0));
@@ -165,6 +167,9 @@ export function InvestmentsList({ investments }: { investments: InvestmentRow[] 
                               >
                                 <Pencil className="h-4 w-4" /> Editar
                               </DropdownMenuItem>
+                              <DropdownMenuItem disabled={inv.currentAmount <= 0} onClick={() => setWithdrawing(inv)}>
+                                <ArrowDownToLine className="h-4 w-4" /> Sacar
+                              </DropdownMenuItem>
                               <DropdownMenuItem destructive onClick={() => setDeletingId(inv.id)}>
                                 <Trash2 className="h-4 w-4" /> Excluir
                               </DropdownMenuItem>
@@ -183,6 +188,15 @@ export function InvestmentsList({ investments }: { investments: InvestmentRow[] 
 
       <InvestmentModal open={modalOpen} onOpenChange={setModalOpen} investment={editing} />
       <ConfirmationModal open={!!deletingId} onOpenChange={(o) => !o && setDeletingId(null)} title="Excluir investimento?" onConfirm={handleDelete} loading={busy} />
+      {withdrawing && (
+        <WithdrawModal
+          open={!!withdrawing}
+          onOpenChange={(o) => !o && setWithdrawing(null)}
+          investmentId={withdrawing.id}
+          investmentName={withdrawing.name}
+          currentAmount={withdrawing.currentAmount}
+        />
+      )}
     </div>
   );
 }
