@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
 import { transactionSchema } from "@/lib/validations";
-import { getInvoiceMonth } from "@/lib/finance";
+import { getInvoiceMonth, splitInstallments, addMonthsToKey } from "@/lib/finance";
 import { z } from "zod";
 
 type TransactionInput = z.infer<typeof transactionSchema> & { creditCardId?: string | null };
@@ -47,6 +47,51 @@ export async function createTransaction(raw: TransactionInput) {
   if (data.type === "TRANSFER") {
     if (!data.accountId || !data.transferToAccountId) throw new Error("Selecione as contas de origem e destino");
     if (data.accountId === data.transferToAccountId) throw new Error("As contas de origem e destino devem ser diferentes");
+  }
+
+  // Compra parcelada no cartão: divide o valor em N faturas futuras, em vez
+  // de lançar um único registro (mutuamente exclusivo com recorrência).
+  if (creditCardId && data.isInstallment && data.installmentsCount && data.installmentsCount > 1) {
+    const purchaseDate = new Date(data.date);
+    const purchase = await prisma.installmentPurchase.create({
+      data: {
+        userId: user.id,
+        creditCardId,
+        description: data.description,
+        totalAmount: data.amount,
+        installmentsCount: data.installmentsCount,
+        categoryId: data.categoryId || null,
+        purchaseDate,
+      },
+    });
+
+    const parts = splitInstallments(data.amount, data.installmentsCount);
+    const firstInvoiceMonth = invoiceMonth!;
+
+    await prisma.$transaction(
+      parts.map((amount, idx) =>
+        prisma.transaction.create({
+          data: {
+            userId: user.id,
+            type: "EXPENSE",
+            description: `${data.description} ${idx + 1}/${data.installmentsCount}`,
+            amount,
+            date: purchaseDate,
+            categoryId: data.categoryId || null,
+            creditCardId,
+            invoiceMonth: addMonthsToKey(firstInvoiceMonth, idx),
+            installmentPurchaseId: purchase.id,
+            installmentNumber: idx + 1,
+            paymentMethod: "CREDITO",
+            status: "PAGO",
+            notes: data.notes || null,
+          },
+        })
+      )
+    );
+
+    revalidatePath("/", "layout");
+    return;
   }
 
   let recurringId: string | null = null;

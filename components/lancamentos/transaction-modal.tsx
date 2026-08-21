@@ -69,6 +69,8 @@ export function TransactionModal({ open, onOpenChange, defaultType, editing }: T
   const [frequency, setFrequency] = React.useState<"SEMANAL" | "QUINZENAL" | "MENSAL" | "ANUAL">("MENSAL");
   const [endDate, setEndDate] = React.useState("");
   const [occurrences, setOccurrences] = React.useState<string>("");
+  const [isInstallment, setIsInstallment] = React.useState(false);
+  const [installmentsCount, setInstallmentsCount] = React.useState<string>("2");
 
   const [saving, setSaving] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
@@ -105,6 +107,8 @@ export function TransactionModal({ open, onOpenChange, defaultType, editing }: T
       setStatus(editing.status);
       setNotes(editing.notes ?? "");
       setIsRecurring(false);
+      setIsInstallment(false);
+      setInstallmentsCount("2");
     } else {
       setType(defaultType);
       setDescription("");
@@ -121,9 +125,17 @@ export function TransactionModal({ open, onOpenChange, defaultType, editing }: T
       setFrequency("MENSAL");
       setEndDate("");
       setOccurrences("");
+      setIsInstallment(false);
+      setInstallmentsCount("2");
     }
     setError(null);
   }, [open, editing, defaultType]);
+
+  const isCreditExpense = type === "EXPENSE" && paymentMethod === "CREDITO";
+
+  React.useEffect(() => {
+    if (!isCreditExpense) setIsInstallment(false);
+  }, [isCreditExpense]);
 
   const filteredCategories = categories.filter((c) => c.kind === (type === "INCOME" ? "INCOME" : "EXPENSE"));
   const activeAccounts = accounts.filter((a) => !a.archived);
@@ -145,11 +157,13 @@ export function TransactionModal({ open, onOpenChange, defaultType, editing }: T
         paymentMethod: type === "TRANSFER" ? ("TRANSFERENCIA" as const) : (paymentMethod as PaymentMethod),
         status: status as TransactionStatus,
         notes: notes || null,
-        isRecurring: type !== "TRANSFER" && isRecurring,
-        recurrence: isRecurring
+        isRecurring: type !== "TRANSFER" && !isCreditExpense && isRecurring,
+        recurrence: !isCreditExpense && isRecurring
           ? { frequency, endDate: endDate || null, occurrences: occurrences ? Number(occurrences) : null }
           : null,
         creditCardId: paymentMethod === "CREDITO" ? creditCardId : null,
+        isInstallment: isCreditExpense && isInstallment,
+        installmentsCount: isCreditExpense && isInstallment ? Number(installmentsCount) : null,
       };
 
       if (editing) {
@@ -346,7 +360,39 @@ export function TransactionModal({ open, onOpenChange, defaultType, editing }: T
             <Input id="notes" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Detalhes adicionais" />
           </div>
 
-          {type !== "TRANSFER" && !editing && (
+          {isCreditExpense && !editing && (
+            <div className="rounded-lg border border-border p-3 space-y-3">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="installment" className="mb-0">
+                  Compra parcelada
+                </Label>
+                <Switch id="installment" checked={isInstallment} onCheckedChange={setIsInstallment} />
+              </div>
+              {isInstallment && (
+                <div>
+                  <Label className="text-xs">Número de parcelas</Label>
+                  <Input
+                    type="number"
+                    min={2}
+                    max={48}
+                    value={installmentsCount}
+                    onChange={(e) => setInstallmentsCount(e.target.value)}
+                    placeholder="Ex: 12"
+                  />
+                  {amount > 0 && Number(installmentsCount) >= 2 && (
+                    <p className="mt-1.5 text-xs text-muted-foreground">
+                      {Number(installmentsCount)}x de{" "}
+                      <span className="font-medium text-foreground">
+                        {(amount / Number(installmentsCount)).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                      </span>
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
+          {!isCreditExpense && type !== "TRANSFER" && !editing && (
             <div className="rounded-lg border border-border p-3 space-y-3">
               <div className="flex items-center justify-between">
                 <Label htmlFor="recurring" className="mb-0">
