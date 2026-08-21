@@ -2,9 +2,6 @@ import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { registerSchema } from "@/lib/validations";
-import { seedDemoData } from "@/lib/seed-demo-data";
-
-export const maxDuration = 60;
 
 export async function POST(req: Request) {
   const body = await req.json();
@@ -22,15 +19,9 @@ export async function POST(req: Request) {
   }
 
   const passwordHash = await bcrypt.hash(password, 10);
-  const user = await prisma.user.create({
+  await prisma.user.create({
     data: { name, email: normalizedEmail, passwordHash },
   });
-
-  try {
-    await seedDemoData(user.id);
-  } catch (err) {
-    console.error("Falha ao gerar dados de demonstração:", err);
-  }
 
   return NextResponse.json({ ok: true });
 }
