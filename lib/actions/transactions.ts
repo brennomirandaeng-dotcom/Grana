@@ -76,7 +76,7 @@ export async function createTransaction(raw: TransactionInput) {
             type: "EXPENSE",
             description: `${data.description} ${idx + 1}/${data.installmentsCount}`,
             amount,
-            date: purchaseDate,
+            date: addPeriod(purchaseDate, "MENSAL", idx),
             categoryId: data.categoryId || null,
             creditCardId,
             invoiceMonth: addMonthsToKey(firstInvoiceMonth, idx),
