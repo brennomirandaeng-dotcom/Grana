@@ -48,7 +48,7 @@ export function AssetModal({ open, onOpenChange, asset }: { open: boolean; onOpe
         toast({ title: "Bem adicionado", variant: "success" });
       }
       onOpenChange(false);
-      refresh();
+      refresh("Salvando bem...");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao salvar");
     } finally {
@@ -95,7 +95,7 @@ export function AssetModal({ open, onOpenChange, asset }: { open: boolean; onOpe
             </Button>
             <Button type="submit" disabled={saving}>
               {saving && <Loader2 className="h-4 w-4 animate-spin" />}
-              Salvar
+              {saving ? "Salvando..." : "Salvar"}
             </Button>
           </DialogFooter>
         </form>

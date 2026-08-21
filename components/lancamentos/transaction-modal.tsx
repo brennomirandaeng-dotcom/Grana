@@ -175,7 +175,7 @@ export function TransactionModal({ open, onOpenChange, defaultType, editing }: T
         if (type === "INCOME") playCashRegisterSound();
       }
       onOpenChange(false);
-      refresh();
+      refresh("Salvando lançamento...");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Não foi possível salvar o lançamento");
     } finally {
@@ -191,7 +191,7 @@ export function TransactionModal({ open, onOpenChange, defaultType, editing }: T
       toast({ title: "Lançamento excluído", variant: "success" });
       setConfirmDeleteOpen(false);
       onOpenChange(false);
-      refresh();
+      refresh("Excluindo lançamento...");
     } catch {
       toast({ title: "Erro ao excluir", variant: "destructive" });
     } finally {
@@ -446,7 +446,7 @@ export function TransactionModal({ open, onOpenChange, defaultType, editing }: T
               </Button>
               <Button type="submit" disabled={saving || loadingRefs}>
                 {saving && <Loader2 className="h-4 w-4 animate-spin" />}
-                Salvar
+                {saving ? "Salvando..." : "Salvar"}
               </Button>
             </div>
           </DialogFooter>

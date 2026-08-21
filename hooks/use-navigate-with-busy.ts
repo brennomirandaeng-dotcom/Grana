@@ -4,12 +4,11 @@ import { useRouter } from "next/navigation";
 import { pushBusy } from "@/lib/loading-bus";
 
 /**
- * Atualiza os dados da página (router.refresh) marcando o app como "ocupado"
- * globalmente (barra de progresso no topo) até a nova renderização terminar —
- * sem isso, entre o fechar do modal e os dados novos aparecerem, a tela fica
- * parada sem nenhum indício de que algo está acontecendo.
+ * Mesma ideia do useActionRefresh, mas para navegação via router.push (troca
+ * de filtro, período, ordenação, mês) — mantém a barra global visível durante
+ * a transição para os novos dados, em vez de a tela ficar parada sem feedback.
  */
-export function useActionRefresh(defaultMessage = "Atualizando dados...") {
+export function useNavigateWithBusy(defaultMessage = "Atualizando...") {
   const router = useRouter();
   const [isPending, startTransition] = React.useTransition();
   const messageRef = React.useRef(defaultMessage);
@@ -19,15 +18,15 @@ export function useActionRefresh(defaultMessage = "Atualizando dados...") {
     return pushBusy(messageRef.current);
   }, [isPending]);
 
-  const refresh = React.useCallback(
-    (message?: string) => {
+  const navigate = React.useCallback(
+    (url: string, message?: string) => {
       messageRef.current = message ?? defaultMessage;
       startTransition(() => {
-        router.refresh();
+        router.push(url);
       });
     },
     [router, defaultMessage]
   );
 
-  return { refresh, isPending };
+  return { navigate, isPending };
 }

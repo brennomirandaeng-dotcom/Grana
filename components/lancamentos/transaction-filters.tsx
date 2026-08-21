@@ -1,6 +1,7 @@
 "use client";
 import * as React from "react";
-import { useRouter, usePathname, useSearchParams } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
+import { useNavigateWithBusy } from "@/hooks/use-navigate-with-busy";
 import { Input } from "@/components/ui/input";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
@@ -22,9 +23,9 @@ export function TransactionFilters({
   accounts: Option[];
   cards: Option[];
 }) {
-  const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const { navigate } = useNavigateWithBusy("Atualizando resultados...");
 
   const [query, setQuery] = React.useState(searchParams.get("q") ?? "");
   const [showMore, setShowMore] = React.useState(false);
@@ -35,7 +36,7 @@ export function TransactionFilters({
     const params = new URLSearchParams(searchParams.toString());
     if (value) params.set(key, value);
     else params.delete(key);
-    router.push(`${pathname}?${params.toString()}`);
+    navigate(`${pathname}?${params.toString()}`);
   }
 
   function handleSearchSubmit(e: React.FormEvent) {
@@ -49,7 +50,7 @@ export function TransactionFilters({
     else params.delete("min");
     if (maxAmount > 0) params.set("max", String(maxAmount));
     else params.delete("max");
-    router.push(`${pathname}?${params.toString()}`);
+    navigate(`${pathname}?${params.toString()}`);
   }
 
   const hasActiveFilters = ["type", "categoryId", "accountId", "creditCardId", "status", "min", "max", "q"].some((k) => searchParams.get(k));
@@ -109,7 +110,7 @@ export function TransactionFilters({
         </Button>
 
         {hasActiveFilters && (
-          <Button type="button" variant="ghost" size="sm" onClick={() => router.push(pathname)}>
+          <Button type="button" variant="ghost" size="sm" onClick={() => navigate(pathname, "Limpando filtros...")}>
             <X className="h-4 w-4" /> Limpar
           </Button>
         )}

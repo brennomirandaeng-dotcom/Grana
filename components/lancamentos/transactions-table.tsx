@@ -1,7 +1,8 @@
 "use client";
 import * as React from "react";
-import { useRouter, usePathname, useSearchParams } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { useActionRefresh } from "@/hooks/use-action-refresh";
+import { useNavigateWithBusy } from "@/hooks/use-navigate-with-busy";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Money } from "@/components/shared/money";
@@ -25,9 +26,9 @@ const statusVariant: Record<string, "positive" | "warning" | "info"> = {
 };
 
 function SortHeader({ field, label }: { field: string; label: string }) {
-  const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const { navigate } = useNavigateWithBusy("Ordenando...");
   const currentSort = searchParams.get("sort") ?? "date";
   const currentDir = searchParams.get("dir") ?? "desc";
   const active = currentSort === field;
@@ -36,7 +37,7 @@ function SortHeader({ field, label }: { field: string; label: string }) {
     const params = new URLSearchParams(searchParams.toString());
     params.set("sort", field);
     params.set("dir", active && currentDir === "desc" ? "asc" : "desc");
-    router.push(`${pathname}?${params.toString()}`);
+    navigate(`${pathname}?${params.toString()}`);
   }
 
   return (
@@ -59,7 +60,7 @@ export function TransactionsTable({ transactions, hasFilters }: { transactions: 
     try {
       await deleteTransaction(deletingId);
       toast({ title: "Lançamento excluído", variant: "success" });
-      refresh();
+      refresh("Excluindo lançamento...");
     } catch {
       toast({ title: "Erro ao excluir", variant: "destructive" });
     } finally {

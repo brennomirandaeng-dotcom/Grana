@@ -3,12 +3,12 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
-import { categorySchema } from "@/lib/validations";
+import { categorySchema, parseInput } from "@/lib/validations";
 import { z } from "zod";
 
 export async function createCategory(raw: z.infer<typeof categorySchema>) {
   const user = await requireUser();
-  const data = categorySchema.parse(raw);
+  const data = parseInput(categorySchema, raw);
   await prisma.category.create({
     data: {
       userId: user.id,
@@ -24,7 +24,7 @@ export async function createCategory(raw: z.infer<typeof categorySchema>) {
 
 export async function updateCategory(id: string, raw: z.infer<typeof categorySchema>) {
   const user = await requireUser();
-  const data = categorySchema.parse(raw);
+  const data = parseInput(categorySchema, raw);
   await prisma.category.updateMany({
     where: { id, userId: user.id },
     data: {

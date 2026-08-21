@@ -43,7 +43,7 @@ export function AccountsList({ accounts }: { accounts: AccountRow[] }) {
     try {
       await archiveAccount(id, archived);
       toast({ title: archived ? "Conta arquivada" : "Conta reativada", variant: "success" });
-      refresh();
+      refresh("Atualizando conta...");
     } finally {
       setBusy(false);
     }
@@ -55,7 +55,7 @@ export function AccountsList({ accounts }: { accounts: AccountRow[] }) {
     try {
       await deleteAccount(deletingId);
       toast({ title: "Conta excluída", variant: "success" });
-      refresh();
+      refresh("Excluindo conta...");
     } catch (err) {
       toast({ title: err instanceof Error ? err.message : "Erro ao excluir", variant: "destructive" });
     } finally {

@@ -3,13 +3,13 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
-import { goalSchema, goalContributionSchema } from "@/lib/validations";
+import { goalSchema, goalContributionSchema, parseInput } from "@/lib/validations";
 import { round2 } from "@/lib/finance";
 import { z } from "zod";
 
 export async function createGoal(raw: z.infer<typeof goalSchema>) {
   const user = await requireUser();
-  const data = goalSchema.parse(raw);
+  const data = parseInput(goalSchema, raw);
   const goal = await prisma.goal.create({
     data: {
       userId: user.id,
@@ -29,7 +29,7 @@ export async function createGoal(raw: z.infer<typeof goalSchema>) {
 
 export async function updateGoal(id: string, raw: z.infer<typeof goalSchema>) {
   const user = await requireUser();
-  const data = goalSchema.parse(raw);
+  const data = parseInput(goalSchema, raw);
   await prisma.goal.updateMany({
     where: { id, userId: user.id },
     data: { name: data.name, targetAmount: data.targetAmount, deadline: data.deadline ? new Date(data.deadline) : null, color: data.color || "#f59e0b", icon: data.icon || "Target" },
@@ -51,7 +51,7 @@ export async function deleteGoal(id: string) {
 
 export async function addGoalContribution(goalId: string, raw: z.infer<typeof goalContributionSchema>) {
   const user = await requireUser();
-  const data = goalContributionSchema.parse(raw);
+  const data = parseInput(goalContributionSchema, raw);
   const goal = await prisma.goal.findFirst({ where: { id: goalId, userId: user.id } });
   if (!goal) throw new Error("Meta não encontrada");
 

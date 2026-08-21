@@ -47,7 +47,7 @@ export function BudgetModal({
       await upsertBudget({ categoryId, month, limit });
       toast({ title: "Orçamento definido", variant: "success" });
       onOpenChange(false);
-      refresh();
+      refresh("Salvando orçamento...");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao salvar orçamento");
     } finally {
@@ -90,7 +90,7 @@ export function BudgetModal({
             </Button>
             <Button type="submit" disabled={saving || !categoryId}>
               {saving && <Loader2 className="h-4 w-4 animate-spin" />}
-              Salvar
+              {saving ? "Salvando..." : "Salvar"}
             </Button>
           </DialogFooter>
         </form>

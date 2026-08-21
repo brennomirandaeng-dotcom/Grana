@@ -74,7 +74,7 @@ export function CategoryModal({ open, onOpenChange, category, parentCandidates, 
         toast({ title: "Categoria criada", variant: "success" });
       }
       onOpenChange(false);
-      refresh();
+      refresh("Salvando categoria...");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao salvar categoria");
     } finally {
@@ -160,7 +160,7 @@ export function CategoryModal({ open, onOpenChange, category, parentCandidates, 
             </Button>
             <Button type="submit" disabled={saving}>
               {saving && <Loader2 className="h-4 w-4 animate-spin" />}
-              Salvar
+              {saving ? "Salvando..." : "Salvar"}
             </Button>
           </DialogFooter>
         </form>

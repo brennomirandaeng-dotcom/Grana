@@ -54,7 +54,7 @@ export function InvestmentsList({ investments }: { investments: InvestmentRow[] 
     try {
       await deleteInvestment(deletingId);
       toast({ title: "Investimento excluído", variant: "success" });
-      refresh();
+      refresh("Excluindo investimento...");
     } finally {
       setBusy(false);
       setDeletingId(null);

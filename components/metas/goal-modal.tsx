@@ -60,7 +60,7 @@ export function GoalModal({ open, onOpenChange, goal }: GoalModalProps) {
         toast({ title: "Meta criada", variant: "success" });
       }
       onOpenChange(false);
-      refresh();
+      refresh("Salvando meta...");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao salvar meta");
     } finally {
@@ -110,7 +110,7 @@ export function GoalModal({ open, onOpenChange, goal }: GoalModalProps) {
             </Button>
             <Button type="submit" disabled={saving}>
               {saving && <Loader2 className="h-4 w-4 animate-spin" />}
-              Salvar
+              {saving ? "Salvando..." : "Salvar"}
             </Button>
           </DialogFooter>
         </form>

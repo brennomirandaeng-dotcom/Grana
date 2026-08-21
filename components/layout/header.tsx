@@ -1,6 +1,6 @@
 "use client";
 import * as React from "react";
-import { useRouter } from "next/navigation";
+import { useNavigateWithBusy } from "@/hooks/use-navigate-with-busy";
 import { Search, Menu, Sun, Moon, LogOut, Settings, User as UserIcon } from "lucide-react";
 import { signOut } from "next-auth/react";
 import { Input } from "@/components/ui/input";
@@ -23,7 +23,7 @@ interface HeaderProps {
 }
 
 export function Header({ user }: HeaderProps) {
-  const router = useRouter();
+  const { navigate } = useNavigateWithBusy("Buscando...");
   const { theme, setTheme } = useTheme();
   const [query, setQuery] = React.useState("");
   const [drawerOpen, setDrawerOpen] = React.useState(false);
@@ -36,7 +36,7 @@ export function Header({ user }: HeaderProps) {
 
   function handleSearch(e: React.FormEvent) {
     e.preventDefault();
-    router.push(`/lancamentos?q=${encodeURIComponent(query)}`);
+    navigate(`/lancamentos?q=${encodeURIComponent(query)}`);
   }
 
   return (

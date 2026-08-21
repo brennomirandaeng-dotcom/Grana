@@ -42,7 +42,7 @@ export function CategoriesList({ categories }: { categories: CategoryRow[] }) {
     try {
       await deleteCategory(deletingId);
       toast({ title: "Categoria excluída", variant: "success" });
-      refresh();
+      refresh("Excluindo categoria...");
     } catch (err) {
       toast({ title: err instanceof Error ? err.message : "Erro ao excluir", variant: "destructive" });
     } finally {

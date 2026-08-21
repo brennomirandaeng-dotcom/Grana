@@ -64,7 +64,7 @@ export function WithdrawModal({
       await withdrawInvestment(investmentId, { amount, accountId, date, notes: notes || null });
       toast({ title: "Resgate registrado", variant: "success" });
       onOpenChange(false);
-      refresh();
+      refresh("Registrando saque...");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Não foi possível registrar o resgate");
     } finally {
@@ -118,7 +118,7 @@ export function WithdrawModal({
             </Button>
             <Button type="submit" disabled={saving || amount <= 0 || amount > currentAmount || !accountId}>
               {saving && <Loader2 className="h-4 w-4 animate-spin" />}
-              Confirmar saque
+              {saving ? "Registrando..." : "Confirmar saque"}
             </Button>
           </DialogFooter>
         </form>

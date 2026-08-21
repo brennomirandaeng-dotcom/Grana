@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
-import { transactionSchema } from "@/lib/validations";
+import { transactionSchema, parseInput } from "@/lib/validations";
 import { getInvoiceMonth, splitInstallments, addMonthsToKey } from "@/lib/finance";
 import { z } from "zod";
 
@@ -30,7 +30,7 @@ function addPeriod(date: Date, frequency: "SEMANAL" | "QUINZENAL" | "MENSAL" | "
 
 export async function createTransaction(raw: TransactionInput) {
   const user = await requireUser();
-  const data = transactionSchema.parse(raw);
+  const data = parseInput(transactionSchema, raw);
 
   let creditCardId: string | null = null;
   let invoiceMonth: string | null = null;
@@ -153,7 +153,7 @@ export async function createTransaction(raw: TransactionInput) {
 
 export async function updateTransaction(id: string, raw: TransactionInput) {
   const user = await requireUser();
-  const data = transactionSchema.parse(raw);
+  const data = parseInput(transactionSchema, raw);
   const existing = await prisma.transaction.findFirst({ where: { id, userId: user.id } });
   if (!existing) throw new Error("Lançamento não encontrado");
 

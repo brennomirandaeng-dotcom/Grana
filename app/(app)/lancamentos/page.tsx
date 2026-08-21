@@ -4,6 +4,7 @@ import { getTransactions, type TransactionSortField, type SortDirection } from "
 import { TransactionFilters } from "@/components/lancamentos/transaction-filters";
 import { TransactionsTable } from "@/components/lancamentos/transactions-table";
 import { MonthNavigator } from "@/components/lancamentos/month-navigator";
+import { PendingFade } from "@/components/shared/pending-fade";
 import { Card, CardContent } from "@/components/ui/card";
 import { Money } from "@/components/shared/money";
 import { round2 } from "@/lib/finance";
@@ -71,36 +72,40 @@ export default async function LancamentosPage({ searchParams }: { searchParams: 
         <MonthNavigator month={resolvedMonth} isAll={isAllMonths} />
       </div>
 
-      <div className="grid grid-cols-3 gap-4 max-w-xl">
-        <Card>
-          <CardContent className="p-4">
-            <p className="text-xs text-muted-foreground">Receitas (filtro)</p>
-            <Money value={totalIncome} className="font-semibold" />
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <p className="text-xs text-muted-foreground">Despesas (filtro)</p>
-            <Money value={-totalExpense} className="font-semibold" />
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <p className="text-xs text-muted-foreground">Resultado</p>
-            <Money value={round2(totalIncome - totalExpense)} className="font-semibold" />
-          </CardContent>
-        </Card>
-      </div>
+      <PendingFade className="space-y-6">
+        <div className="grid grid-cols-3 gap-4 max-w-xl">
+          <Card>
+            <CardContent className="p-4">
+              <p className="text-xs text-muted-foreground">Receitas (filtro)</p>
+              <Money value={totalIncome} className="font-semibold" />
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4">
+              <p className="text-xs text-muted-foreground">Despesas (filtro)</p>
+              <Money value={-totalExpense} className="font-semibold" />
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4">
+              <p className="text-xs text-muted-foreground">Resultado</p>
+              <Money value={round2(totalIncome - totalExpense)} className="font-semibold" />
+            </CardContent>
+          </Card>
+        </div>
+      </PendingFade>
 
       <TransactionFilters categories={categories} accounts={accounts} cards={cards} />
 
-      <Card>
-        <CardContent className="p-0 lg:p-2">
-          <div className="p-4 lg:p-0">
-            <TransactionsTable transactions={transactions} hasFilters={hasAnyTransactionEver} />
-          </div>
-        </CardContent>
-      </Card>
+      <PendingFade>
+        <Card>
+          <CardContent className="p-0 lg:p-2">
+            <div className="p-4 lg:p-0">
+              <TransactionsTable transactions={transactions} hasFilters={hasAnyTransactionEver} />
+            </div>
+          </CardContent>
+        </Card>
+      </PendingFade>
     </div>
   );
 }

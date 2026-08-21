@@ -42,7 +42,7 @@ export function CreditCardsList({ cards, categories }: { cards: CardRow[]; categ
     try {
       await archiveCreditCard(id, archived);
       toast({ title: archived ? "Cartão arquivado" : "Cartão reativado", variant: "success" });
-      refresh();
+      refresh("Atualizando cartão...");
     } finally {
       setBusy(false);
     }
@@ -54,7 +54,7 @@ export function CreditCardsList({ cards, categories }: { cards: CardRow[]; categ
     try {
       await deleteCreditCard(deletingId);
       toast({ title: "Cartão excluído", variant: "success" });
-      refresh();
+      refresh("Excluindo cartão...");
     } catch (err) {
       toast({ title: err instanceof Error ? err.message : "Erro ao excluir", variant: "destructive" });
     } finally {

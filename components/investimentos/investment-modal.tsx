@@ -63,7 +63,7 @@ export function InvestmentModal({ open, onOpenChange, investment }: InvestmentMo
         toast({ title: "Investimento adicionado", variant: "success" });
       }
       onOpenChange(false);
-      refresh();
+      refresh("Salvando investimento...");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao salvar investimento");
     } finally {
@@ -124,7 +124,7 @@ export function InvestmentModal({ open, onOpenChange, investment }: InvestmentMo
             </Button>
             <Button type="submit" disabled={saving}>
               {saving && <Loader2 className="h-4 w-4 animate-spin" />}
-              Salvar
+              {saving ? "Salvando..." : "Salvar"}
             </Button>
           </DialogFooter>
         </form>

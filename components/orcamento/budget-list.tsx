@@ -39,7 +39,7 @@ export function BudgetList({ budgets, month, categories }: { budgets: BudgetRow[
     try {
       await deleteBudget(deletingId);
       toast({ title: "Orçamento removido", variant: "success" });
-      refresh();
+      refresh("Removendo orçamento...");
     } finally {
       setBusy(false);
       setDeletingId(null);
@@ -113,7 +113,7 @@ export function BudgetList({ budgets, month, categories }: { budgets: BudgetRow[
       )}
 
       <BudgetModal open={modalOpen} onOpenChange={setModalOpen} month={month} categories={categories} existingCategoryIds={budgets.map((b) => b.categoryId)} />
-      <ConfirmationModal open={!!deletingId} onOpenChange={(o) => !o && setDeletingId(null)} title="Remover orçamento?" onConfirm={handleDelete} loading={busy} />
+      <ConfirmationModal open={!!deletingId} onOpenChange={(o) => !o && setDeletingId(null)} title="Remover orçamento?" loadingLabel="Removendo..." onConfirm={handleDelete} loading={busy} />
     </div>
   );
 }

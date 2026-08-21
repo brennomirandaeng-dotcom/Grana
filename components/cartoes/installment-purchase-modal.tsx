@@ -74,7 +74,7 @@ export function InstallmentPurchaseModal({
       });
       toast({ title: "Compra parcelada registrada", variant: "success" });
       onOpenChange(false);
-      refresh();
+      refresh("Registrando parcelas...");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao registrar compra");
     } finally {
@@ -151,7 +151,7 @@ export function InstallmentPurchaseModal({
             </Button>
             <Button type="submit" disabled={saving || !creditCardId}>
               {saving && <Loader2 className="h-4 w-4 animate-spin" />}
-              Salvar
+              {saving ? "Salvando..." : "Salvar"}
             </Button>
           </DialogFooter>
         </form>

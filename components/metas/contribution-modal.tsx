@@ -36,7 +36,7 @@ export function ContributionModal({ open, onOpenChange, goalId, goalName }: { op
       await addGoalContribution(goalId, { amount, type, note: note || null });
       toast({ title: type === "DEPOSIT" ? "Depósito adicionado" : "Retirada registrada", variant: "success" });
       onOpenChange(false);
-      refresh();
+      refresh("Registrando movimento...");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao registrar movimento");
     } finally {
@@ -75,7 +75,7 @@ export function ContributionModal({ open, onOpenChange, goalId, goalName }: { op
             </Button>
             <Button type="submit" disabled={saving || amount <= 0}>
               {saving && <Loader2 className="h-4 w-4 animate-spin" />}
-              Confirmar
+              {saving ? "Registrando..." : "Confirmar"}
             </Button>
           </DialogFooter>
         </form>

@@ -3,12 +3,12 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
-import { accountSchema, transferSchema } from "@/lib/validations";
+import { accountSchema, transferSchema, parseInput } from "@/lib/validations";
 import { z } from "zod";
 
 export async function createAccount(raw: z.infer<typeof accountSchema>) {
   const user = await requireUser();
-  const data = accountSchema.parse(raw);
+  const data = parseInput(accountSchema, raw);
   await prisma.account.create({
     data: {
       userId: user.id,
@@ -24,7 +24,7 @@ export async function createAccount(raw: z.infer<typeof accountSchema>) {
 
 export async function updateAccount(id: string, raw: z.infer<typeof accountSchema>) {
   const user = await requireUser();
-  const data = accountSchema.parse(raw);
+  const data = parseInput(accountSchema, raw);
   await prisma.account.updateMany({
     where: { id, userId: user.id },
     data: {
@@ -56,7 +56,7 @@ export async function deleteAccount(id: string) {
 
 export async function createTransfer(raw: z.infer<typeof transferSchema>) {
   const user = await requireUser();
-  const data = transferSchema.parse(raw);
+  const data = parseInput(transferSchema, raw);
   if (data.fromAccountId === data.toAccountId) throw new Error("As contas de origem e destino devem ser diferentes");
 
   await prisma.transaction.create({

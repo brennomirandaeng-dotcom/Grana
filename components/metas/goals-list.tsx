@@ -44,7 +44,7 @@ export function GoalsList({ goals }: { goals: GoalRow[] }) {
     try {
       await archiveGoal(id, archived);
       toast({ title: archived ? "Meta arquivada" : "Meta reativada", variant: "success" });
-      refresh();
+      refresh("Atualizando meta...");
     } finally {
       setBusy(false);
     }
@@ -56,7 +56,7 @@ export function GoalsList({ goals }: { goals: GoalRow[] }) {
     try {
       await deleteGoal(deletingId);
       toast({ title: "Meta excluída", variant: "success" });
-      refresh();
+      refresh("Excluindo meta...");
     } finally {
       setBusy(false);
       setDeletingId(null);

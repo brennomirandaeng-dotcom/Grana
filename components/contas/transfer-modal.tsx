@@ -45,7 +45,7 @@ export function TransferModal({ open, onOpenChange, accounts }: { open: boolean;
       await createTransfer({ fromAccountId, toAccountId, amount, date, notes: notes || null });
       toast({ title: "Transferência realizada", variant: "success" });
       onOpenChange(false);
-      refresh();
+      refresh("Transferindo...");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao transferir");
     } finally {
@@ -120,7 +120,7 @@ export function TransferModal({ open, onOpenChange, accounts }: { open: boolean;
             </Button>
             <Button type="submit" disabled={saving || !fromAccountId || !toAccountId}>
               {saving && <Loader2 className="h-4 w-4 animate-spin" />}
-              Transferir
+              {saving ? "Transferindo..." : "Transferir"}
             </Button>
           </DialogFooter>
         </form>

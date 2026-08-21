@@ -4,13 +4,14 @@ import { revalidatePath } from "next/cache";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
+import { parseInput } from "@/lib/validations";
 import { z } from "zod";
 
 const profileSchema = z.object({ name: z.string().min(2, "Informe seu nome") });
 
 export async function updateProfile(raw: z.infer<typeof profileSchema>) {
   const user = await requireUser();
-  const data = profileSchema.parse(raw);
+  const data = parseInput(profileSchema, raw);
   await prisma.user.update({ where: { id: user.id }, data: { name: data.name } });
   revalidatePath("/", "layout");
 }
@@ -23,7 +24,7 @@ const preferencesSchema = z.object({
 
 export async function updatePreferences(raw: z.infer<typeof preferencesSchema>) {
   const user = await requireUser();
-  const data = preferencesSchema.parse(raw);
+  const data = parseInput(preferencesSchema, raw);
   await prisma.user.update({ where: { id: user.id }, data });
   revalidatePath("/", "layout");
 }
@@ -41,7 +42,7 @@ const passwordSchema = z.object({
 
 export async function changePassword(raw: z.infer<typeof passwordSchema>) {
   const user = await requireUser();
-  const data = passwordSchema.parse(raw);
+  const data = parseInput(passwordSchema, raw);
 
   const dbUser = await prisma.user.findUniqueOrThrow({ where: { id: user.id } });
   const valid = await bcrypt.compare(data.currentPassword, dbUser.passwordHash);

@@ -59,7 +59,7 @@ export function NetWorthView({
       if (deleting.kind === "asset") await deleteAsset(deleting.id);
       else await deleteLiability(deleting.id);
       toast({ title: "Removido com sucesso", variant: "success" });
-      refresh();
+      refresh("Removendo item...");
     } finally {
       setBusy(false);
       setDeleting(null);
@@ -193,7 +193,7 @@ export function NetWorthView({
 
       <AssetModal open={assetModalOpen} onOpenChange={setAssetModalOpen} asset={editingAsset} />
       <LiabilityModal open={liabilityModalOpen} onOpenChange={setLiabilityModalOpen} liability={editingLiability} />
-      <ConfirmationModal open={!!deleting} onOpenChange={(o) => !o && setDeleting(null)} title="Remover item?" onConfirm={handleDelete} loading={busy} />
+      <ConfirmationModal open={!!deleting} onOpenChange={(o) => !o && setDeleting(null)} title="Remover item?" loadingLabel="Removendo..." onConfirm={handleDelete} loading={busy} />
     </div>
   );
 }

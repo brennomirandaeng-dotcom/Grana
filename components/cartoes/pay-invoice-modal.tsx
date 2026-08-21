@@ -50,7 +50,7 @@ export function PayInvoiceModal({
       await payInvoice(creditCardId, invoiceMonth, accountId, amount, paidDate);
       toast({ title: "Fatura paga", variant: "success" });
       onOpenChange(false);
-      refresh();
+      refresh("Registrando pagamento...");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao pagar fatura");
     } finally {
@@ -99,7 +99,7 @@ export function PayInvoiceModal({
             </Button>
             <Button type="submit" disabled={saving || !accountId}>
               {saving && <Loader2 className="h-4 w-4 animate-spin" />}
-              Confirmar pagamento
+              {saving ? "Registrando..." : "Confirmar pagamento"}
             </Button>
           </DialogFooter>
         </form>

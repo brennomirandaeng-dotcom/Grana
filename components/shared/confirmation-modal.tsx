@@ -8,6 +8,7 @@ interface ConfirmationModalProps {
   title: string;
   description?: string;
   confirmLabel?: string;
+  loadingLabel?: string;
   cancelLabel?: string;
   destructive?: boolean;
   loading?: boolean;
@@ -20,13 +21,15 @@ export function ConfirmationModal({
   title,
   description,
   confirmLabel = "Confirmar",
+  loadingLabel,
   cancelLabel = "Cancelar",
   destructive = true,
   loading = false,
   onConfirm,
 }: ConfirmationModalProps) {
+  const busyLabel = loadingLabel ?? (destructive ? "Excluindo..." : "Aguarde...");
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={(o) => !loading && onOpenChange(o)}>
       <DialogContent size="sm">
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
@@ -37,7 +40,7 @@ export function ConfirmationModal({
             {cancelLabel}
           </Button>
           <Button variant={destructive ? "destructive" : "default"} onClick={onConfirm} disabled={loading}>
-            {loading ? "Aguarde..." : confirmLabel}
+            {loading ? busyLabel : confirmLabel}
           </Button>
         </DialogFooter>
       </DialogContent>

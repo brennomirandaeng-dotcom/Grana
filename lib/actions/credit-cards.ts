@@ -3,13 +3,13 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
-import { creditCardSchema, installmentPurchaseSchema } from "@/lib/validations";
+import { creditCardSchema, installmentPurchaseSchema, parseInput } from "@/lib/validations";
 import { getInvoiceMonth, splitInstallments, addMonthsToKey } from "@/lib/finance";
 import { z } from "zod";
 
 export async function createCreditCard(raw: z.infer<typeof creditCardSchema>) {
   const user = await requireUser();
-  const data = creditCardSchema.parse(raw);
+  const data = parseInput(creditCardSchema, raw);
   await prisma.creditCard.create({
     data: {
       userId: user.id,
@@ -27,7 +27,7 @@ export async function createCreditCard(raw: z.infer<typeof creditCardSchema>) {
 
 export async function updateCreditCard(id: string, raw: z.infer<typeof creditCardSchema>) {
   const user = await requireUser();
-  const data = creditCardSchema.parse(raw);
+  const data = parseInput(creditCardSchema, raw);
   await prisma.creditCard.updateMany({
     where: { id, userId: user.id },
     data: {
@@ -59,7 +59,7 @@ export async function deleteCreditCard(id: string) {
 
 export async function createInstallmentPurchase(raw: z.infer<typeof installmentPurchaseSchema>) {
   const user = await requireUser();
-  const data = installmentPurchaseSchema.parse(raw);
+  const data = parseInput(installmentPurchaseSchema, raw);
   const card = await prisma.creditCard.findFirst({ where: { id: data.creditCardId, userId: user.id } });
   if (!card) throw new Error("Cartão inválido");
 

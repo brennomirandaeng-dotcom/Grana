@@ -8,6 +8,7 @@ import { round2 } from "@/lib/finance";
 import { prisma } from "@/lib/prisma";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { PeriodSelector } from "@/components/dashboard/period-selector";
+import { PendingFade } from "@/components/shared/pending-fade";
 import { SummaryCards } from "@/components/dashboard/summary-cards";
 import { IncomeExpenseChart } from "@/components/dashboard/income-expense-chart";
 import { CategoryBreakdown } from "@/components/dashboard/category-breakdown";
@@ -52,46 +53,48 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
         <PeriodSelector current={period} />
       </div>
 
-      <SummaryCards
-        balance={balance}
-        balanceChange={balanceChange}
-        income={summary.income}
-        expense={summary.expense}
-        result={summary.result}
-        investments={round2(investmentsTotal._sum.currentAmount ?? 0)}
-        netWorth={netWorth.netWorth}
-      />
+      <PendingFade className="space-y-6">
+        <SummaryCards
+          balance={balance}
+          balanceChange={balanceChange}
+          income={summary.income}
+          expense={summary.expense}
+          result={summary.result}
+          investments={round2(investmentsTotal._sum.currentAmount ?? 0)}
+          netWorth={netWorth.netWorth}
+        />
 
-      {insights.length > 0 && <InsightsList insights={insights} />}
+        {insights.length > 0 && <InsightsList insights={insights} />}
 
-      <div className="grid xl:grid-cols-5 gap-4">
-        <Card className="xl:col-span-3">
+        <div className="grid xl:grid-cols-5 gap-4">
+          <Card className="xl:col-span-3">
+            <CardHeader>
+              <CardTitle>Receitas x Despesas</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <IncomeExpenseChart data={monthlySeries} />
+            </CardContent>
+          </Card>
+
+          <Card className="xl:col-span-2">
+            <CardHeader>
+              <CardTitle>Despesas por categoria</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <CategoryBreakdown categories={categoryData.categories} previousTotals={prevTotalsMap} />
+            </CardContent>
+          </Card>
+        </div>
+
+        <Card>
           <CardHeader>
-            <CardTitle>Receitas x Despesas</CardTitle>
+            <CardTitle>Próximos vencimentos</CardTitle>
           </CardHeader>
           <CardContent>
-            <IncomeExpenseChart data={monthlySeries} />
+            <UpcomingList items={upcoming} />
           </CardContent>
         </Card>
-
-        <Card className="xl:col-span-2">
-          <CardHeader>
-            <CardTitle>Despesas por categoria</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <CategoryBreakdown categories={categoryData.categories} previousTotals={prevTotalsMap} />
-          </CardContent>
-        </Card>
-      </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Próximos vencimentos</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <UpcomingList items={upcoming} />
-        </CardContent>
-      </Card>
+      </PendingFade>
     </div>
   );
 }

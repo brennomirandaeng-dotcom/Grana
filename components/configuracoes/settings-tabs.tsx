@@ -62,7 +62,7 @@ function ProfileTab({ user }: { user: UserData }) {
     try {
       await updateProfile({ name });
       toast({ title: "Perfil atualizado", variant: "success" });
-      refresh();
+      refresh("Salvando perfil...");
     } catch {
       toast({ title: "Erro ao atualizar perfil", variant: "destructive" });
     } finally {
@@ -94,7 +94,7 @@ function ProfileTab({ user }: { user: UserData }) {
           </div>
           <Button type="submit" disabled={saving}>
             {saving && <Loader2 className="h-4 w-4 animate-spin" />}
-            Salvar alterações
+            {saving ? "Salvando..." : "Salvar alterações"}
           </Button>
         </form>
       </CardContent>
@@ -114,7 +114,7 @@ function PreferencesTab({ user }: { user: UserData }) {
     try {
       await updatePreferences({ currency: "BRL", firstDayOfMonth: Number(firstDayOfMonth), dateFormat });
       toast({ title: "Preferências salvas", variant: "success" });
-      refresh();
+      refresh("Salvando preferências...");
     } catch {
       toast({ title: "Erro ao salvar preferências", variant: "destructive" });
     } finally {
@@ -168,7 +168,7 @@ function PreferencesTab({ user }: { user: UserData }) {
           </div>
           <Button type="submit" disabled={saving}>
             {saving && <Loader2 className="h-4 w-4 animate-spin" />}
-            Salvar preferências
+            {saving ? "Salvando..." : "Salvar preferências"}
           </Button>
         </form>
       </CardContent>
@@ -257,7 +257,7 @@ function SecurityTab() {
             {error && <p className="text-sm text-negative">{error}</p>}
             <Button type="submit" disabled={saving}>
               {saving && <Loader2 className="h-4 w-4 animate-spin" />}
-              Alterar senha
+              {saving ? "Alterando..." : "Alterar senha"}
             </Button>
           </form>
         </CardContent>

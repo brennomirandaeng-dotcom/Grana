@@ -1,5 +1,19 @@
 import { z } from "zod";
 
+/**
+ * Faz o parse validando com zod, mas lança um erro com uma mensagem legível
+ * (a do primeiro campo inválido) em vez do JSON bruto de `ZodError.message`
+ * — que, sem isso, vaza pra tela do usuário como texto ilegível quando o
+ * catch de um formulário exibe `err.message`.
+ */
+export function parseInput<T>(schema: z.ZodType<T>, raw: unknown): T {
+  const result = schema.safeParse(raw);
+  if (!result.success) {
+    throw new Error(result.error.issues[0]?.message ?? "Dados inválidos");
+  }
+  return result.data;
+}
+
 export const registerSchema = z.object({
   name: z.string().min(2, "Informe seu nome completo"),
   email: z.string().email("E-mail inválido"),

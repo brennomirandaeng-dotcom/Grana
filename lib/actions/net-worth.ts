@@ -3,19 +3,19 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
-import { assetSchema, liabilitySchema } from "@/lib/validations";
+import { assetSchema, liabilitySchema, parseInput } from "@/lib/validations";
 import { z } from "zod";
 
 export async function createAsset(raw: z.infer<typeof assetSchema>) {
   const user = await requireUser();
-  const data = assetSchema.parse(raw);
+  const data = parseInput(assetSchema, raw);
   await prisma.asset.create({ data: { userId: user.id, name: data.name, type: data.type, value: data.value } });
   revalidatePath("/", "layout");
 }
 
 export async function updateAsset(id: string, raw: z.infer<typeof assetSchema>) {
   const user = await requireUser();
-  const data = assetSchema.parse(raw);
+  const data = parseInput(assetSchema, raw);
   await prisma.asset.updateMany({ where: { id, userId: user.id }, data: { name: data.name, type: data.type, value: data.value } });
   revalidatePath("/", "layout");
 }
@@ -28,7 +28,7 @@ export async function deleteAsset(id: string) {
 
 export async function createLiability(raw: z.infer<typeof liabilitySchema>) {
   const user = await requireUser();
-  const data = liabilitySchema.parse(raw);
+  const data = parseInput(liabilitySchema, raw);
   await prisma.liability.create({
     data: {
       userId: user.id,
@@ -47,7 +47,7 @@ export async function createLiability(raw: z.infer<typeof liabilitySchema>) {
 
 export async function updateLiability(id: string, raw: z.infer<typeof liabilitySchema>) {
   const user = await requireUser();
-  const data = liabilitySchema.parse(raw);
+  const data = parseInput(liabilitySchema, raw);
   await prisma.liability.updateMany({
     where: { id, userId: user.id },
     data: {

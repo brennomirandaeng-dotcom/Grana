@@ -1,5 +1,6 @@
 "use client";
-import { useRouter, usePathname, useSearchParams } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
+import { useNavigateWithBusy } from "@/hooks/use-navigate-with-busy";
 import { ChevronLeft, ChevronRight, CalendarDays } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { addMonthsToKey } from "@/lib/finance";
@@ -11,15 +12,15 @@ function monthLabel(monthKey: string) {
 }
 
 export function MonthNavigator({ month, isAll }: { month: string; isAll: boolean }) {
-  const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const { navigate } = useNavigateWithBusy("Atualizando período...");
 
   function goTo(value: string | null) {
     const params = new URLSearchParams(searchParams.toString());
     if (value) params.set("month", value);
     else params.delete("month");
-    router.push(`${pathname}?${params.toString()}`);
+    navigate(`${pathname}?${params.toString()}`);
   }
 
   if (isAll) {
