@@ -12,14 +12,17 @@ export function formatCompactCurrency(value: number): string {
   return formatCurrency(value);
 }
 
+// Datas de lançamentos/metas/etc. são armazenadas como meia-noite UTC do dia
+// escolhido (a partir de um input "YYYY-MM-DD"). Formatar em UTC evita que o
+// fuso horário local (ex: UTC-3 no Brasil) exiba o dia anterior.
 export function formatDate(date: Date | string): string {
   const d = typeof date === "string" ? new Date(date) : date;
-  return new Intl.DateTimeFormat("pt-BR").format(d);
+  return new Intl.DateTimeFormat("pt-BR", { timeZone: "UTC" }).format(d);
 }
 
 export function formatDateLong(date: Date | string): string {
   const d = typeof date === "string" ? new Date(date) : date;
-  return new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "long", year: "numeric" }).format(d);
+  return new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "long", year: "numeric", timeZone: "UTC" }).format(d);
 }
 
 export function formatPercent(value: number, decimals = 1): string {
