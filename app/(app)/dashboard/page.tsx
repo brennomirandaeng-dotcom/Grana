@@ -15,12 +15,12 @@ import { CategoryBreakdown } from "@/components/dashboard/category-breakdown";
 import { InsightsList } from "@/components/dashboard/insights-list";
 import { UpcomingList } from "@/components/dashboard/upcoming-list";
 
-export default async function DashboardPage({ searchParams }: { searchParams: Promise<{ period?: string }> }) {
+export default async function DashboardPage({ searchParams }: { searchParams: Promise<{ period?: string; from?: string; to?: string }> }) {
   const user = await requireUser();
-  const { period: periodParam } = await searchParams;
+  const { period: periodParam, from, to } = await searchParams;
   const period = (periodParam as PeriodKey) ?? "mes";
 
-  const range = getPeriodRange(period);
+  const range = getPeriodRange(period, new Date(), from, to);
   const prevRange = getPreviousRange(range);
 
   const [accounts, netWorth, summary, monthlySeries, categoryData, prevCategoryData, insights, upcoming, investmentsTotal] = await Promise.all([
