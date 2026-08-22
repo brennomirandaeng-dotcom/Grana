@@ -26,6 +26,7 @@ export interface CardRow {
   color: string;
   archived: boolean;
   totalDebt: number;
+  invoiceTotal: number;
   available: number;
 }
 
@@ -134,8 +135,11 @@ export function CreditCardsList({ cards, categories }: { cards: CardRow[]; categ
                   </div>
 
                   <div className="mt-4">
-                    <p className="text-xs text-muted-foreground">Total devido</p>
-                    <Money value={c.totalDebt} colorize={false} className="text-xl font-semibold" />
+                    <p className="text-xs text-muted-foreground">Valor da fatura</p>
+                    <Money value={c.invoiceTotal} colorize={false} className="text-xl font-semibold" />
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Total devido: <Money value={c.totalDebt} colorize={false} className="text-xs" />
+                    </p>
                   </div>
 
                   <Progress value={usagePercent} className="mt-3" indicatorClassName={usagePercent >= 90 ? "bg-negative" : usagePercent >= 70 ? "bg-warning" : "bg-brand"} />

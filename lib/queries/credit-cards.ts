@@ -1,22 +1,34 @@
 import { prisma } from "@/lib/prisma";
-import { round2 } from "@/lib/finance";
+import { round2, getInvoiceMonth } from "@/lib/finance";
 
 export async function getCreditCardsWithUsage(userId: string) {
   const cards = await prisma.creditCard.findMany({ where: { userId }, orderBy: { createdAt: "asc" } });
 
-  const [purchases, payments] = await Promise.all([
+  const [purchases, payments, openTransactions] = await Promise.all([
     prisma.transaction.groupBy({ by: ["creditCardId"], where: { userId, creditCardId: { not: null }, isInvoicePayment: false }, _sum: { amount: true } }),
     prisma.invoicePayment.groupBy({ by: ["creditCardId"], where: { userId }, _sum: { amountPaid: true } }),
+    prisma.transaction.findMany({
+      where: { userId, creditCardId: { not: null }, isInvoicePayment: false },
+      select: { creditCardId: true, invoiceMonth: true, amount: true },
+    }),
   ]);
 
   const purchaseMap = Object.fromEntries(purchases.map((p) => [p.creditCardId as string, p._sum.amount ?? 0]));
   const paymentMap = Object.fromEntries(payments.map((p) => [p.creditCardId, p._sum.amountPaid ?? 0]));
 
+  const now = new Date();
   return cards.map((c) => {
     const totalDebt = round2((purchaseMap[c.id] ?? 0) - (paymentMap[c.id] ?? 0));
+    const currentInvoiceMonth = getInvoiceMonth(now, c.closingDay);
+    const invoiceTotal = round2(
+      openTransactions
+        .filter((t) => t.creditCardId === c.id && t.invoiceMonth === currentInvoiceMonth)
+        .reduce((sum, t) => sum + t.amount, 0)
+    );
     return {
       ...c,
       totalDebt,
+      invoiceTotal,
       available: round2(c.limitAmount - totalDebt),
     };
   });
