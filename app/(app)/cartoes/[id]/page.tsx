@@ -4,12 +4,12 @@ import { requireUser } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { getCardInvoice } from "@/lib/queries/credit-cards";
 import { getInvoiceMonth, addMonthsToKey } from "@/lib/finance";
-import { formatMonthLabel, formatCurrency, formatDate } from "@/lib/format";
+import { formatMonthLabel, formatCurrency } from "@/lib/format";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
 import { EmptyState } from "@/components/shared/empty-state";
 import { InvoiceActions } from "@/components/cartoes/invoice-actions";
+import { InvoicePurchasesTable } from "@/components/cartoes/invoice-purchases-table";
 import { ChevronLeft, ChevronRight, Receipt, CreditCard as CardIcon } from "lucide-react";
 
 export default async function CardDetailPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ month?: string }> }) {
@@ -74,37 +74,7 @@ export default async function CardDetailPage({ params, searchParams }: { params:
           {purchases.length === 0 ? (
             <EmptyState icon={Receipt} title="Nenhuma compra nesta fatura" className="border-none py-12" />
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Data</TableHead>
-                  <TableHead>Compra</TableHead>
-                  <TableHead>Parcela</TableHead>
-                  <TableHead>Categoria</TableHead>
-                  <TableHead className="text-right">Valor</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {purchases.map((p) => (
-                  <TableRow key={p.id}>
-                    <TableCell className="text-muted-foreground">{formatDate(p.date)}</TableCell>
-                    <TableCell className="font-medium text-foreground">{p.description}</TableCell>
-                    <TableCell className="text-muted-foreground">{p.installmentPurchase ? `${p.installmentNumber}/${p.installmentPurchase.installmentsCount}` : "1/1"}</TableCell>
-                    <TableCell>
-                      {p.category ? (
-                        <span className="inline-flex items-center gap-1.5">
-                          <span className="h-2 w-2 rounded-full" style={{ background: p.category.color }} />
-                          {p.category.name}
-                        </span>
-                      ) : (
-                        "—"
-                      )}
-                    </TableCell>
-                    <TableCell className="text-right font-medium">{formatCurrency(p.amount)}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+            <InvoicePurchasesTable purchases={purchases} />
           )}
         </CardContent>
       </Card>

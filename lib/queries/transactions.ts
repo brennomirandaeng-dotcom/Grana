@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
 
-const transactionInclude = {
+export const transactionInclude = {
   category: true,
   account: true,
   transferToAccount: true,
