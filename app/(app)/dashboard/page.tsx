@@ -2,10 +2,9 @@ import { requireUser } from "@/lib/session";
 import { getAccountsWithBalance } from "@/lib/queries/accounts";
 import { getNetWorth } from "@/lib/queries/net-worth";
 import { getPeriodRange, getPreviousRange, percentChange, type PeriodKey } from "@/lib/queries/period";
-import { getPeriodSummary, getMonthlySeries, getExpensesByCategory, getUpcomingItems, getPendingExpenses } from "@/lib/queries/dashboard";
+import { getPeriodSummary, getMonthlySeries, getExpensesByCategory, getUpcomingItems, getPendingExpensesTotal } from "@/lib/queries/dashboard";
 import { getInsights } from "@/lib/queries/insights";
 import { round2 } from "@/lib/finance";
-import { formatCurrency } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { PeriodSelector } from "@/components/dashboard/period-selector";
@@ -15,7 +14,6 @@ import { IncomeExpenseChart } from "@/components/dashboard/income-expense-chart"
 import { CategoryBreakdown } from "@/components/dashboard/category-breakdown";
 import { InsightsList } from "@/components/dashboard/insights-list";
 import { UpcomingList } from "@/components/dashboard/upcoming-list";
-import { PendingExpensesList } from "@/components/dashboard/pending-expenses-list";
 
 export default async function DashboardPage({ searchParams }: { searchParams: Promise<{ period?: string; from?: string; to?: string }> }) {
   const user = await requireUser();
@@ -25,7 +23,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   const range = getPeriodRange(period, new Date(), from, to);
   const prevRange = getPreviousRange(range);
 
-  const [accounts, netWorth, summary, monthlySeries, categoryData, prevCategoryData, insights, upcoming, pendingExpenses, investmentsTotal] =
+  const [accounts, netWorth, summary, monthlySeries, categoryData, prevCategoryData, insights, upcoming, pendingExpensesTotal, investmentsTotal] =
     await Promise.all([
       getAccountsWithBalance(user.id),
       getNetWorth(user.id),
@@ -35,7 +33,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
       getExpensesByCategory(user.id, prevRange, true),
       getInsights(user.id),
       getUpcomingItems(user.id),
-      getPendingExpenses(user.id),
+      getPendingExpensesTotal(user.id),
       prisma.investment.aggregate({ where: { userId: user.id }, _sum: { currentAmount: true } }),
     ]);
 
@@ -64,6 +62,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
           income={summary.income}
           expense={summary.expenseAll}
           expensePaid={summary.expense}
+          expensePending={pendingExpensesTotal}
           result={summary.result}
           investments={round2(investmentsTotal._sum.currentAmount ?? 0)}
           netWorth={netWorth.netWorth}
@@ -91,26 +90,14 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
           </Card>
         </div>
 
-        <div className="grid lg:grid-cols-2 gap-4">
-          <Card>
-            <CardHeader className="flex-row items-center justify-between space-y-0">
-              <CardTitle>Despesas a pagar</CardTitle>
-              {pendingExpenses.count > 0 && <span className="text-sm font-semibold text-negative">{formatCurrency(pendingExpenses.total)}</span>}
-            </CardHeader>
-            <CardContent>
-              <PendingExpensesList items={pendingExpenses.items} />
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Próximos vencimentos</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <UpcomingList items={upcoming} />
-            </CardContent>
-          </Card>
-        </div>
+        <Card>
+          <CardHeader>
+            <CardTitle>Próximos vencimentos</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <UpcomingList items={upcoming} />
+          </CardContent>
+        </Card>
       </PendingFade>
     </div>
   );

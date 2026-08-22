@@ -2,7 +2,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Money } from "@/components/shared/money";
 import { formatPercent } from "@/lib/format";
 import { cn } from "@/lib/utils";
-import { Wallet, ArrowUpCircle, ArrowDownCircle, CheckCircle2, Scale, TrendingUp, Building2 } from "lucide-react";
+import { Wallet, ArrowUpCircle, ArrowDownCircle, CheckCircle2, Clock, Scale, TrendingUp, Building2 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 interface CardData {
@@ -20,6 +20,7 @@ export function SummaryCards({
   income,
   expense,
   expensePaid,
+  expensePending,
   result,
   investments,
   netWorth,
@@ -29,6 +30,7 @@ export function SummaryCards({
   income: number;
   expense: number;
   expensePaid: number;
+  expensePending: number;
   result: number;
   investments: number;
   netWorth: number;
@@ -38,6 +40,7 @@ export function SummaryCards({
     { label: "Receitas", value: income, icon: ArrowUpCircle, tone: "positive" },
     { label: "Despesas", value: expense, icon: ArrowDownCircle, tone: "negative" },
     { label: "Despesas já pagas", value: expensePaid, icon: CheckCircle2, tone: "negative" },
+    { label: "Despesas a pagar", value: expensePending, icon: Clock, tone: "negative" },
     { label: "Resultado do período", value: result, icon: Scale, colorize: true },
     { label: "Investimentos", value: investments, icon: TrendingUp },
     { label: "Patrimônio líquido", value: netWorth, icon: Building2 },
