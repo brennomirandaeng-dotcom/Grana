@@ -33,7 +33,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
       getExpensesByCategory(user.id, prevRange, true),
       getInsights(user.id),
       getUpcomingItems(user.id),
-      getPendingExpensesTotal(user.id),
+      getPendingExpensesTotal(user.id, range),
       prisma.investment.aggregate({ where: { userId: user.id }, _sum: { currentAmount: true } }),
     ]);
 
