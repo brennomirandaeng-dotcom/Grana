@@ -40,7 +40,7 @@ export async function createTransaction(raw: TransactionInput) {
     const card = await prisma.creditCard.findFirst({ where: { id: raw.creditCardId, userId: user.id } });
     if (!card) throw new Error("Cartão inválido");
     creditCardId = card.id;
-    invoiceMonth = getInvoiceMonth(new Date(data.date), card.closingDay);
+    invoiceMonth = getInvoiceMonth(new Date(data.date), card.closingDay, card.dueDay);
     accountId = null; // compra no cartão não afeta saldo da conta
   }
 
@@ -165,7 +165,7 @@ export async function updateTransaction(id: string, raw: TransactionInput) {
     const card = await prisma.creditCard.findFirst({ where: { id: raw.creditCardId, userId: user.id } });
     if (!card) throw new Error("Cartão inválido");
     creditCardId = card.id;
-    invoiceMonth = getInvoiceMonth(new Date(data.date), card.closingDay);
+    invoiceMonth = getInvoiceMonth(new Date(data.date), card.closingDay, card.dueDay);
     accountId = null;
   }
 

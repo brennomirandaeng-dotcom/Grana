@@ -125,7 +125,7 @@ export async function seedDemoData(userId: string) {
   // ---- Nível 3: depende da compra parcelada (nível 2) existir ----
 
   const installmentParts = splitInstallments(897, 3);
-  const baseInvoiceMonth = getInvoiceMonth(purchaseDate, 25);
+  const baseInvoiceMonth = getInvoiceMonth(purchaseDate, cards.nubank.closingDay, cards.nubank.dueDay);
   const [baseY, baseM] = baseInvoiceMonth.split("-").map(Number);
 
   await prisma.transaction.createMany({
@@ -166,7 +166,7 @@ export async function seedDemoData(userId: string) {
         date: new Date(today.getFullYear(), today.getMonth(), 8),
         categoryId: cat("Alimentação"),
         creditCardId: cards.itau.id,
-        invoiceMonth: getInvoiceMonth(new Date(today.getFullYear(), today.getMonth(), 8), 20),
+        invoiceMonth: getInvoiceMonth(new Date(today.getFullYear(), today.getMonth(), 8), cards.itau.closingDay, cards.itau.dueDay),
         paymentMethod: "CREDITO" as const,
         status: "PAGO" as const,
       },
