@@ -9,12 +9,16 @@ export function InvoiceActions({
   invoiceMonth,
   total,
   paid,
+  partiallyPaid,
+  remaining,
   accounts,
 }: {
   creditCardId: string;
   invoiceMonth: string;
   total: number;
   paid: boolean;
+  partiallyPaid?: boolean;
+  remaining?: number;
   accounts: { id: string; name: string }[];
 }) {
   const [open, setOpen] = React.useState(false);
@@ -27,12 +31,14 @@ export function InvoiceActions({
     );
   }
 
+  const suggestedAmount = partiallyPaid && remaining !== undefined ? remaining : total;
+
   return (
     <>
       <Button onClick={() => setOpen(true)} disabled={total <= 0}>
-        Pagar fatura
+        {partiallyPaid ? "Pagar valor restante" : "Pagar fatura"}
       </Button>
-      <PayInvoiceModal open={open} onOpenChange={setOpen} creditCardId={creditCardId} invoiceMonth={invoiceMonth} suggestedAmount={total} accounts={accounts} />
+      <PayInvoiceModal open={open} onOpenChange={setOpen} creditCardId={creditCardId} invoiceMonth={invoiceMonth} suggestedAmount={suggestedAmount} accounts={accounts} />
     </>
   );
 }

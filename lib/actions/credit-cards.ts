@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
 import { creditCardSchema, installmentPurchaseSchema, parseInput } from "@/lib/validations";
-import { getInvoiceMonth, splitInstallments, addMonthsToKey, dueMonthOffset } from "@/lib/finance";
+import { getInvoiceMonth, splitInstallments, addMonthsToKey, dueMonthOffset, round2 } from "@/lib/finance";
 import { z } from "zod";
 
 export async function createCreditCard(raw: z.infer<typeof creditCardSchema>) {
@@ -151,23 +151,44 @@ export async function recalculateInvoiceMonths(): Promise<number> {
   return fixedCount;
 }
 
+/**
+ * Registra o pagamento de uma fatura. Se o valor pago (somado a eventuais
+ * pagamentos parciais anteriores da mesma fatura) não cobrir o total da
+ * fatura, ela e seus lançamentos continuam como estão — não são marcados
+ * como pagos — e o pagamento fica registrado como parcial, permitindo
+ * complementar depois.
+ */
 export async function payInvoice(creditCardId: string, invoiceMonth: string, accountId: string, amount: number, paidDate: string) {
   const user = await requireUser();
   const card = await prisma.creditCard.findFirst({ where: { id: creditCardId, userId: user.id } });
   if (!card) throw new Error("Cartão inválido");
+  if (amount <= 0) throw new Error("Informe um valor válido");
 
-  const existing = await prisma.invoicePayment.findUnique({ where: { creditCardId_invoiceMonth: { creditCardId, invoiceMonth } } });
-  if (existing) throw new Error("Esta fatura já foi paga");
+  const [{ _sum }, existing] = await Promise.all([
+    prisma.transaction.aggregate({
+      where: { userId: user.id, creditCardId, invoiceMonth, isInvoicePayment: false },
+      _sum: { amount: true },
+    }),
+    prisma.invoicePayment.findUnique({ where: { creditCardId_invoiceMonth: { creditCardId, invoiceMonth } } }),
+  ]);
+  const total = round2(_sum.amount ?? 0);
+  const alreadyPaid = existing?.amountPaid ?? 0;
+  if (existing && alreadyPaid >= total) throw new Error("Esta fatura já foi paga");
+
+  const newTotalPaid = round2(alreadyPaid + amount);
+  const fullyPaid = newTotalPaid >= total;
 
   await prisma.$transaction([
-    prisma.invoicePayment.create({
-      data: { userId: user.id, creditCardId, invoiceMonth, amountPaid: amount, paidDate: new Date(paidDate), accountId },
+    prisma.invoicePayment.upsert({
+      where: { creditCardId_invoiceMonth: { creditCardId, invoiceMonth } },
+      create: { userId: user.id, creditCardId, invoiceMonth, amountPaid: newTotalPaid, paidDate: new Date(paidDate), accountId },
+      update: { amountPaid: newTotalPaid, paidDate: new Date(paidDate), accountId },
     }),
     prisma.transaction.create({
       data: {
         userId: user.id,
         type: "EXPENSE",
-        description: `Pagamento fatura ${card.name}`,
+        description: fullyPaid ? `Pagamento fatura ${card.name}` : `Pagamento parcial fatura ${card.name}`,
         amount,
         date: new Date(paidDate),
         accountId,
@@ -177,6 +198,9 @@ export async function payInvoice(creditCardId: string, invoiceMonth: string, acc
         invoicePaymentCardId: creditCardId,
       },
     }),
+    ...(fullyPaid
+      ? [prisma.transaction.updateMany({ where: { userId: user.id, creditCardId, invoiceMonth, isInvoicePayment: false }, data: { status: "PAGO" } })]
+      : []),
   ]);
 
   revalidatePath("/", "layout");
