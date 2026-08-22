@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "User" ADD COLUMN     "role" TEXT NOT NULL DEFAULT 'USER',
+ADD COLUMN     "active" BOOLEAN NOT NULL DEFAULT true;
