@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation";
 import { Wallet } from "lucide-react";
 import { NAV_ITEMS } from "@/lib/nav";
 import { cn } from "@/lib/utils";
+import { LinkBusyBridge } from "@/components/shared/link-busy-bridge";
 
 export function Sidebar() {
   const pathname = usePathname();
@@ -32,6 +33,7 @@ export function Sidebar() {
             >
               <Icon className="h-4 w-4 shrink-0" />
               {item.label}
+              <LinkBusyBridge message="Carregando..." />
             </Link>
           );
         })}

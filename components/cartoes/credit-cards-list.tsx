@@ -11,6 +11,7 @@ import { ConfirmationModal } from "@/components/shared/confirmation-modal";
 import { CreditCardModal } from "@/components/cartoes/credit-card-modal";
 import { InstallmentPurchaseModal } from "@/components/cartoes/installment-purchase-modal";
 import { archiveCreditCard, deleteCreditCard, recalculateInvoiceMonths, syncPaidInvoiceStatuses } from "@/lib/actions/credit-cards";
+import { LinkBusyBridge } from "@/components/shared/link-busy-bridge";
 import { toast } from "@/hooks/use-toast";
 import { CreditCard as CardIcon, Plus, ShoppingCart, MoreHorizontal, Pencil, Archive, ArchiveRestore, Trash2 } from "lucide-react";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
@@ -126,6 +127,7 @@ export function CreditCardsList({ cards, categories }: { cards: CardRow[]; categ
                         <p className="font-medium text-foreground">{c.name}</p>
                         <p className="text-xs text-muted-foreground">{c.bank}</p>
                       </div>
+                      <LinkBusyBridge message="Abrindo fatura..." />
                     </Link>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -175,6 +177,7 @@ export function CreditCardsList({ cards, categories }: { cards: CardRow[]; categ
                     <Button variant="secondary" size="sm" className="w-full">
                       Ver fatura
                     </Button>
+                    <LinkBusyBridge message="Abrindo fatura..." />
                   </Link>
                 </CardContent>
               </Card>
