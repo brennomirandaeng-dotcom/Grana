@@ -4,20 +4,27 @@ import { monthKey, formatMonthLabel } from "@/lib/format";
 import { type Range, getPreviousRange } from "@/lib/queries/period";
 import { subMonths, startOfMonth, endOfMonth } from "date-fns";
 
-async function sumByType(userId: string, type: "INCOME" | "EXPENSE", range: Range) {
+async function sumByType(userId: string, type: "INCOME" | "EXPENSE", range: Range, onlyPaid = true) {
   const result = await prisma.transaction.aggregate({
-    where: { userId, type, isInvoicePayment: false, status: "PAGO", date: { gte: range.from, lte: range.to } },
+    where: { userId, type, isInvoicePayment: false, ...(onlyPaid ? { status: "PAGO" } : {}), date: { gte: range.from, lte: range.to } },
     _sum: { amount: true },
   });
   return round2(result._sum.amount ?? 0);
 }
 
+/**
+ * income/expense/result continuam considerando só o que está "Pago" (usado
+ * por Relatórios). expenseAll soma despesas lançadas independente do status
+ * (Pago, Pendente, Agendado) — usado pelo Dashboard, que quer mostrar o
+ * total comprometido do período, não só o já efetivamente pago.
+ */
 export async function getPeriodSummary(userId: string, range: Range) {
   const prevRange = getPreviousRange(range);
 
-  const [income, expense, prevIncome, prevExpense] = await Promise.all([
+  const [income, expense, expenseAll, prevIncome, prevExpense] = await Promise.all([
     sumByType(userId, "INCOME", range),
     sumByType(userId, "EXPENSE", range),
+    sumByType(userId, "EXPENSE", range, false),
     sumByType(userId, "INCOME", prevRange),
     sumByType(userId, "EXPENSE", prevRange),
   ]);
@@ -25,6 +32,7 @@ export async function getPeriodSummary(userId: string, range: Range) {
   return {
     income,
     expense,
+    expenseAll,
     result: round2(income - expense),
     prevIncome,
     prevExpense,
@@ -32,20 +40,23 @@ export async function getPeriodSummary(userId: string, range: Range) {
   };
 }
 
-export async function getMonthlySeries(userId: string, months = 8) {
+export async function getMonthlySeries(userId: string, months = 8, expenseAllStatuses = false) {
   const now = new Date();
   const rangeFrom = startOfMonth(subMonths(now, months - 1));
   const rangeTo = endOfMonth(now);
 
   // Uma única consulta para a janela inteira (em vez de uma consulta por mês)
-  // — evita N round-trips sequenciais contra o banco.
+  // — evita N round-trips sequenciais contra o banco. Receitas sempre só
+  // "Pago"; despesas incluem todos os status quando expenseAllStatuses.
   const transactions = await prisma.transaction.findMany({
     where: {
       userId,
-      type: { in: ["INCOME", "EXPENSE"] },
       isInvoicePayment: false,
-      status: "PAGO",
       date: { gte: rangeFrom, lte: rangeTo },
+      OR: [
+        { type: "INCOME", status: "PAGO" },
+        { type: "EXPENSE", ...(expenseAllStatuses ? {} : { status: "PAGO" }) },
+      ],
     },
     select: { type: true, amount: true, date: true },
   });
@@ -72,9 +83,9 @@ export async function getMonthlySeries(userId: string, months = 8) {
   return series;
 }
 
-export async function getExpensesByCategory(userId: string, range: Range) {
+export async function getExpensesByCategory(userId: string, range: Range, allStatuses = false) {
   const transactions = await prisma.transaction.findMany({
-    where: { userId, type: "EXPENSE", isInvoicePayment: false, status: "PAGO", date: { gte: range.from, lte: range.to } },
+    where: { userId, type: "EXPENSE", isInvoicePayment: false, ...(allStatuses ? {} : { status: "PAGO" }), date: { gte: range.from, lte: range.to } },
     include: { category: true },
   });
 
