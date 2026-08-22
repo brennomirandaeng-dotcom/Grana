@@ -21,7 +21,7 @@ export default async function CardDetailPage({ params, searchParams }: { params:
   if (!card) notFound();
 
   const invoiceMonth = month ?? getInvoiceMonth(new Date(), card.closingDay, card.dueDay);
-  const { purchases, total, paid } = await getCardInvoice(user.id, id, invoiceMonth);
+  const { purchases, total, paid, partiallyPaid, amountPaid, remaining } = await getCardInvoice(user.id, id, invoiceMonth);
   const accounts = await prisma.account.findMany({ where: { userId: user.id, archived: false }, orderBy: { name: "asc" } });
 
   const prevMonth = addMonthsToKey(invoiceMonth, -1);
@@ -57,15 +57,34 @@ export default async function CardDetailPage({ params, searchParams }: { params:
                 </button>
               </Link>
             </div>
-            {paid ? <Badge variant="positive">Paga</Badge> : <Badge variant="warning">Em aberto</Badge>}
+            {paid ? (
+              <Badge variant="positive">Paga</Badge>
+            ) : partiallyPaid ? (
+              <Badge variant="info">Pago parcialmente</Badge>
+            ) : (
+              <Badge variant="warning">Em aberto</Badge>
+            )}
           </div>
 
           <div>
             <p className="text-xs text-muted-foreground">Valor da fatura</p>
             <p className="text-3xl font-semibold tabular-nums">{formatCurrency(total)}</p>
+            {partiallyPaid && (
+              <p className="mt-1 text-xs text-muted-foreground">
+                Pago até agora: {formatCurrency(amountPaid)} · Falta {formatCurrency(remaining)}
+              </p>
+            )}
           </div>
 
-          <InvoiceActions creditCardId={id} invoiceMonth={invoiceMonth} total={total} paid={paid} accounts={accounts} />
+          <InvoiceActions
+            creditCardId={id}
+            invoiceMonth={invoiceMonth}
+            total={total}
+            paid={paid}
+            partiallyPaid={partiallyPaid}
+            remaining={remaining}
+            accounts={accounts}
+          />
         </CardContent>
       </Card>
 

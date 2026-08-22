@@ -46,7 +46,11 @@ export async function getCardInvoice(userId: string, creditCardId: string, invoi
   ]);
 
   const total = round2(purchases.reduce((sum, t) => sum + t.amount, 0));
-  return { purchases, total, payment, paid: !!payment };
+  const amountPaid = payment?.amountPaid ?? 0;
+  const paid = !!payment && amountPaid >= total;
+  const partiallyPaid = !!payment && !paid;
+
+  return { purchases, total, payment, paid, partiallyPaid, amountPaid, remaining: round2(total - amountPaid) };
 }
 
 export async function getTotalCardDebt(userId: string) {
