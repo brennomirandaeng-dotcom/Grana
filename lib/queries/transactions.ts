@@ -48,10 +48,10 @@ export async function getTransactions(
     ...(filters.query
       ? {
           OR: [
-            { description: { contains: filters.query } },
-            { notes: { contains: filters.query } },
-            { category: { name: { contains: filters.query } } },
-            { account: { name: { contains: filters.query } } },
+            { description: { contains: filters.query, mode: "insensitive" } },
+            { notes: { contains: filters.query, mode: "insensitive" } },
+            { category: { name: { contains: filters.query, mode: "insensitive" } } },
+            { account: { name: { contains: filters.query, mode: "insensitive" } } },
           ],
         }
       : {}),
