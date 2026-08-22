@@ -39,6 +39,15 @@ export function TransactionFilters({
     navigate(`${pathname}?${params.toString()}`);
   }
 
+  // Busca automática: aplica o termo digitado sem precisar apertar Enter,
+  // com um pequeno atraso para não disparar uma navegação a cada tecla.
+  React.useEffect(() => {
+    if (query === (searchParams.get("q") ?? "")) return;
+    const timer = setTimeout(() => setParam("q", query || null), 400);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [query]);
+
   function handleSearchSubmit(e: React.FormEvent) {
     e.preventDefault();
     setParam("q", query || null);
