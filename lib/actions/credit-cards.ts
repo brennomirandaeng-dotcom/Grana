@@ -152,6 +152,46 @@ export async function recalculateInvoiceMonths(): Promise<number> {
 }
 
 /**
+ * Sincroniza o status dos lançamentos com pagamentos de fatura já
+ * registrados antes de pagar a fatura passar a marcar os itens como pagos.
+ * Para cada fatura cujo valor pago já cobre (ou supera) o total, marca os
+ * lançamentos daquela fatura como PAGO. Faturas com pagamento menor que o
+ * total não são alteradas — continuam "pago parcialmente", calculado ao
+ * vivo a partir do valor pago x total, sem precisar de migração. Idempotente:
+ * só atualiza o que ainda não estiver como PAGO.
+ */
+export async function syncPaidInvoiceStatuses(): Promise<number> {
+  const user = await requireUser();
+  const payments = await prisma.invoicePayment.findMany({ where: { userId: user.id } });
+
+  let fixedCount = 0;
+
+  for (const payment of payments) {
+    const { _sum } = await prisma.transaction.aggregate({
+      where: { userId: user.id, creditCardId: payment.creditCardId, invoiceMonth: payment.invoiceMonth, isInvoicePayment: false },
+      _sum: { amount: true },
+    });
+    const total = round2(_sum.amount ?? 0);
+    if (total <= 0 || payment.amountPaid < total) continue;
+
+    const result = await prisma.transaction.updateMany({
+      where: {
+        userId: user.id,
+        creditCardId: payment.creditCardId,
+        invoiceMonth: payment.invoiceMonth,
+        isInvoicePayment: false,
+        status: { not: "PAGO" },
+      },
+      data: { status: "PAGO" },
+    });
+    fixedCount += result.count;
+  }
+
+  if (fixedCount > 0) revalidatePath("/", "layout");
+  return fixedCount;
+}
+
+/**
  * Registra o pagamento de uma fatura. Se o valor pago (somado a eventuais
  * pagamentos parciais anteriores da mesma fatura) não cobrir o total da
  * fatura, ela e seus lançamentos continuam como estão — não são marcados

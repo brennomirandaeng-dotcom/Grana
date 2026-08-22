@@ -10,7 +10,7 @@ import { EmptyState } from "@/components/shared/empty-state";
 import { ConfirmationModal } from "@/components/shared/confirmation-modal";
 import { CreditCardModal } from "@/components/cartoes/credit-card-modal";
 import { InstallmentPurchaseModal } from "@/components/cartoes/installment-purchase-modal";
-import { archiveCreditCard, deleteCreditCard, recalculateInvoiceMonths } from "@/lib/actions/credit-cards";
+import { archiveCreditCard, deleteCreditCard, recalculateInvoiceMonths, syncPaidInvoiceStatuses } from "@/lib/actions/credit-cards";
 import { toast } from "@/hooks/use-toast";
 import { CreditCard as CardIcon, Plus, ShoppingCart, MoreHorizontal, Pencil, Archive, ArchiveRestore, Trash2 } from "lucide-react";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
@@ -38,13 +38,19 @@ export function CreditCardsList({ cards, categories }: { cards: CardRow[]; categ
   const [deletingId, setDeletingId] = React.useState<string | null>(null);
   const [busy, setBusy] = React.useState(false);
 
-  // Corrige, uma vez, o mes de fatura de lancamentos criados antes do
-  // calculo passar a considerar o dia de vencimento (nao so o de
-  // fechamento). Idempotente: nao faz nada se ja estiver tudo correto.
+  // Corrige, uma vez, dados criados antes de duas mudancas recentes:
+  // (1) o mes de fatura passar a considerar o dia de vencimento (nao so o
+  // de fechamento); (2) pagar uma fatura passar a marcar seus lancamentos
+  // como pagos. Ambas idempotentes: nao fazem nada se ja estiver tudo
+  // correto (faturas pagas parcialmente ja aparecem certas sozinhas, sem
+  // precisar de correcao, pois isso e calculado a partir do valor pago).
   React.useEffect(() => {
-    recalculateInvoiceMonths().then((fixedCount) => {
-      if (fixedCount > 0) {
-        toast({ title: `${fixedCount} lançamento(s) com fatura corrigida`, variant: "success" });
+    Promise.all([recalculateInvoiceMonths(), syncPaidInvoiceStatuses()]).then(([invoiceMonthFixes, statusFixes]) => {
+      const messages: string[] = [];
+      if (invoiceMonthFixes > 0) messages.push(`${invoiceMonthFixes} lançamento(s) com fatura corrigida`);
+      if (statusFixes > 0) messages.push(`${statusFixes} lançamento(s) marcado(s) como pago`);
+      if (messages.length > 0) {
+        toast({ title: messages.join(" · "), variant: "success" });
         refresh("Atualizando faturas...");
       }
     });
