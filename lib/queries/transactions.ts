@@ -34,7 +34,6 @@ export async function getTransactions(
 ): Promise<TransactionWithRelations[]> {
   const where: Prisma.TransactionWhereInput = {
     userId,
-    isInvoicePayment: false,
     ...(filters.from || filters.to
       ? { date: { ...(filters.from ? { gte: filters.from } : {}), ...(filters.to ? { lte: filters.to } : {}) } }
       : {}),
