@@ -140,10 +140,19 @@ export function TransactionModal({ open, onOpenChange, defaultType, editing }: T
   const filteredCategories = categories.filter((c) => c.kind === (type === "INCOME" ? "INCOME" : "EXPENSE"));
   const activeAccounts = accounts.filter((a) => !a.archived);
 
+  const missingSource =
+    type === "TRANSFER" ? !accountId || !transferToAccountId : paymentMethod === "CREDITO" ? !creditCardId : !accountId;
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setSaving(true);
     setError(null);
+
+    if (missingSource) {
+      setError(type === "TRANSFER" ? "Selecione as contas de origem e destino" : paymentMethod === "CREDITO" ? "Selecione o cartão" : "Selecione a conta");
+      return;
+    }
+
+    setSaving(true);
 
     try {
       const payload = {
@@ -444,7 +453,7 @@ export function TransactionModal({ open, onOpenChange, defaultType, editing }: T
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>
                 Cancelar
               </Button>
-              <Button type="submit" disabled={saving || loadingRefs}>
+              <Button type="submit" disabled={saving || loadingRefs || missingSource}>
                 {saving && <Loader2 className="h-4 w-4 animate-spin" />}
                 {saving ? "Salvando..." : "Salvar"}
               </Button>

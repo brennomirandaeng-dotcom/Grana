@@ -47,6 +47,10 @@ export async function createTransaction(raw: TransactionInput) {
   if (data.type === "TRANSFER") {
     if (!data.accountId || !data.transferToAccountId) throw new Error("Selecione as contas de origem e destino");
     if (data.accountId === data.transferToAccountId) throw new Error("As contas de origem e destino devem ser diferentes");
+  } else if (data.paymentMethod === "CREDITO") {
+    if (!creditCardId) throw new Error("Selecione o cartão");
+  } else if (!accountId) {
+    throw new Error("Selecione a conta");
   }
 
   // Compra parcelada no cartão: divide o valor em N faturas futuras, em vez
@@ -169,6 +173,15 @@ export async function updateTransaction(id: string, raw: TransactionInput) {
     creditCardId = found.id;
     invoiceMonth = getInvoiceMonth(new Date(data.date), found.closingDay, found.dueDay);
     accountId = null;
+  }
+
+  if (data.type === "TRANSFER") {
+    if (!data.accountId || !data.transferToAccountId) throw new Error("Selecione as contas de origem e destino");
+    if (data.accountId === data.transferToAccountId) throw new Error("As contas de origem e destino devem ser diferentes");
+  } else if (data.paymentMethod === "CREDITO") {
+    if (!creditCardId) throw new Error("Selecione o cartão");
+  } else if (!accountId) {
+    throw new Error("Selecione a conta");
   }
 
   const newDate = new Date(data.date);
