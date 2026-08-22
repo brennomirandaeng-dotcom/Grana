@@ -124,12 +124,12 @@ export async function getUpcomingItems(userId: string, days = 14) {
 }
 
 /**
- * Total de despesas ainda não pagas (Pendente ou Agendado), sem limite de
- * data — inclui vencidas e futuras.
+ * Total de despesas ainda não pagas (Pendente ou Agendado) dentro do
+ * período selecionado no Dashboard — mesmo range usado nos demais cards.
  */
-export async function getPendingExpensesTotal(userId: string) {
+export async function getPendingExpensesTotal(userId: string, range: Range) {
   const result = await prisma.transaction.aggregate({
-    where: { userId, type: "EXPENSE", isInvoicePayment: false, status: { in: ["PENDENTE", "AGENDADO"] } },
+    where: { userId, type: "EXPENSE", isInvoicePayment: false, status: { in: ["PENDENTE", "AGENDADO"] }, date: { gte: range.from, lte: range.to } },
     _sum: { amount: true },
   });
   return round2(result._sum.amount ?? 0);
