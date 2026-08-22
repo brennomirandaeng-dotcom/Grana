@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/shared/empty-state";
 import { InvoiceActions } from "@/components/cartoes/invoice-actions";
 import { InvoicePurchasesTable } from "@/components/cartoes/invoice-purchases-table";
+import { LinkBusyBridge } from "@/components/shared/link-busy-bridge";
 import { ChevronLeft, ChevronRight, Receipt, CreditCard as CardIcon } from "lucide-react";
 
 export default async function CardDetailPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ month?: string }> }) {
@@ -49,12 +50,14 @@ export default async function CardDetailPage({ params, searchParams }: { params:
                 <button className="h-8 w-8 flex items-center justify-center rounded-lg hover:bg-surface-muted text-muted-foreground">
                   <ChevronLeft className="h-4 w-4" />
                 </button>
+                <LinkBusyBridge message="Atualizando fatura..." />
               </Link>
               <p className="text-sm font-medium min-w-[110px] text-center">{formatMonthLabel(invoiceMonth)}</p>
               <Link href={`/cartoes/${id}?month=${nextMonth}`}>
                 <button className="h-8 w-8 flex items-center justify-center rounded-lg hover:bg-surface-muted text-muted-foreground">
                   <ChevronRight className="h-4 w-4" />
                 </button>
+                <LinkBusyBridge message="Atualizando fatura..." />
               </Link>
             </div>
             {paid ? (

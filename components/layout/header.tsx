@@ -16,6 +16,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { useTheme } from "@/components/providers/theme-provider";
 import { MobileNavDrawer } from "@/components/layout/mobile-nav-drawer";
+import { LinkBusyBridge } from "@/components/shared/link-busy-bridge";
 import Link from "next/link";
 
 interface HeaderProps {
@@ -84,6 +85,7 @@ export function Header({ user }: HeaderProps) {
           <DropdownMenuItem asChild>
             <Link href="/configuracoes">
               <Settings className="h-4 w-4" /> Configurações
+              <LinkBusyBridge message="Carregando..." />
             </Link>
           </DropdownMenuItem>
           <DropdownMenuSeparator />

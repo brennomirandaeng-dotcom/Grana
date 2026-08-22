@@ -5,6 +5,7 @@ import { Plus } from "lucide-react";
 import { MOBILE_NAV_ITEMS } from "@/lib/nav";
 import { cn } from "@/lib/utils";
 import { useQuickAdd } from "@/components/providers/quick-add-provider";
+import { LinkBusyBridge } from "@/components/shared/link-busy-bridge";
 
 export function MobileBottomNav() {
   const pathname = usePathname();
@@ -43,6 +44,7 @@ function NavLink({ item, active }: { item: (typeof MOBILE_NAV_ITEMS)[number]; ac
     <Link href={item.href} className={cn("flex flex-col items-center justify-center gap-0.5 text-[10px]", active ? "text-brand" : "text-muted-foreground")}>
       <Icon className="h-5 w-5" />
       {item.label}
+      <LinkBusyBridge message="Carregando..." />
     </Link>
   );
 }

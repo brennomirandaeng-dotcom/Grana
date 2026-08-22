@@ -6,6 +6,7 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { NAV_ITEMS } from "@/lib/nav";
 import { cn } from "@/lib/utils";
 import { VisuallyHidden } from "@/components/shared/visually-hidden";
+import { LinkBusyBridge } from "@/components/shared/link-busy-bridge";
 
 export function MobileNavDrawer({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
   const pathname = usePathname();
@@ -38,6 +39,7 @@ export function MobileNavDrawer({ open, onOpenChange }: { open: boolean; onOpenC
               >
                 <Icon className="h-4 w-4 shrink-0" />
                 {item.label}
+                <LinkBusyBridge message="Carregando..." />
               </Link>
             );
           })}
