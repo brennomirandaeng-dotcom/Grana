@@ -1,11 +1,24 @@
 // Regras de cálculo financeiro centralizadas (ver seção 34 do briefing do produto).
 
 /**
- * Determina a qual fatura (mês) uma compra no cartão pertence, com base no dia
- * de fechamento do cartão. Se a compra ocorrer no dia de fechamento ou depois,
- * ela cai na fatura do mês seguinte.
+ * Cartões cujo vencimento cai num dia numericamente menor que o fechamento
+ * (ex: fecha dia 25, vence dia 03) têm vencimento no mês seguinte ao do
+ * fechamento. Cartões com vencimento no mesmo mês do fechamento (ex: fecha
+ * dia 22, vence dia 29) têm offset 0. Esse deslocamento é constante para um
+ * mesmo cartão, independente do ciclo.
  */
-export function getInvoiceMonth(purchaseDate: Date, closingDay: number): string {
+export function dueMonthOffset(closingDay: number, dueDay: number): 0 | 1 {
+  return dueDay < closingDay ? 1 : 0;
+}
+
+/**
+ * Determina a qual fatura (mês de vencimento) uma compra no cartão pertence,
+ * com base no dia de fechamento e no dia de vencimento do cartão. Primeiro
+ * identifica o mês em que o ciclo da compra fecha (mês seguinte, se a compra
+ * ocorrer no dia de fechamento ou depois); depois desloca para o mês de
+ * vencimento correspondente àquele fechamento.
+ */
+export function getInvoiceMonth(purchaseDate: Date, closingDay: number, dueDay: number): string {
   const day = purchaseDate.getDate();
   let year = purchaseDate.getFullYear();
   let month = purchaseDate.getMonth(); // 0-based
@@ -18,7 +31,8 @@ export function getInvoiceMonth(purchaseDate: Date, closingDay: number): string 
     }
   }
 
-  return `${year}-${String(month + 1).padStart(2, "0")}`;
+  const closingKey = `${year}-${String(month + 1).padStart(2, "0")}`;
+  return addMonthsToKey(closingKey, dueMonthOffset(closingDay, dueDay));
 }
 
 /** Soma meses (positivos ou negativos) a uma chave "YYYY-MM". */
@@ -29,7 +43,7 @@ export function addMonthsToKey(key: string, amount: number): string {
 }
 
 export function getInvoicePeriod(invoiceMonth: string, closingDay: number, dueDay: number) {
-  const closing = addMonthsToKey(invoiceMonth, -1);
+  const closing = addMonthsToKey(invoiceMonth, -dueMonthOffset(closingDay, dueDay));
   const [closeY, closeM] = closing.split("-").map(Number);
   const closingDate = new Date(closeY, closeM - 1, closingDay);
 

@@ -20,7 +20,7 @@ export default async function CardDetailPage({ params, searchParams }: { params:
   const card = await prisma.creditCard.findFirst({ where: { id, userId: user.id } });
   if (!card) notFound();
 
-  const invoiceMonth = month ?? getInvoiceMonth(new Date(), card.closingDay);
+  const invoiceMonth = month ?? getInvoiceMonth(new Date(), card.closingDay, card.dueDay);
   const { purchases, total, paid } = await getCardInvoice(user.id, id, invoiceMonth);
   const accounts = await prisma.account.findMany({ where: { userId: user.id, archived: false }, orderBy: { name: "asc" } });
 

@@ -19,7 +19,7 @@ export async function getCreditCardsWithUsage(userId: string) {
   const now = new Date();
   return cards.map((c) => {
     const totalDebt = round2((purchaseMap[c.id] ?? 0) - (paymentMap[c.id] ?? 0));
-    const currentInvoiceMonth = getInvoiceMonth(now, c.closingDay);
+    const currentInvoiceMonth = getInvoiceMonth(now, c.closingDay, c.dueDay);
     const invoiceTotal = round2(
       openTransactions
         .filter((t) => t.creditCardId === c.id && t.invoiceMonth === currentInvoiceMonth)

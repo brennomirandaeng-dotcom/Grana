@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
 import { creditCardSchema, installmentPurchaseSchema, parseInput } from "@/lib/validations";
-import { getInvoiceMonth, splitInstallments, addMonthsToKey } from "@/lib/finance";
+import { getInvoiceMonth, splitInstallments, addMonthsToKey, dueMonthOffset } from "@/lib/finance";
 import { z } from "zod";
 
 export async function createCreditCard(raw: z.infer<typeof creditCardSchema>) {
@@ -77,7 +77,7 @@ export async function createInstallmentPurchase(raw: z.infer<typeof installmentP
   });
 
   const parts = splitInstallments(data.totalAmount, data.installmentsCount);
-  const firstInvoiceMonth = getInvoiceMonth(purchaseDate, card.closingDay);
+  const firstInvoiceMonth = getInvoiceMonth(purchaseDate, card.closingDay, card.dueDay);
 
   await prisma.$transaction(
     parts.map((amount, idx) =>
@@ -101,6 +101,54 @@ export async function createInstallmentPurchase(raw: z.infer<typeof installmentP
   );
 
   revalidatePath("/", "layout");
+}
+
+/**
+ * Recalcula o mês de fatura (invoiceMonth) dos lançamentos já existentes com
+ * a fórmula corrigida, que agora considera o dia de vencimento além do dia
+ * de fechamento. Só altera cartões em que isso muda algo (vencimento no mês
+ * seguinte ao fechamento) e só corrige o que ainda estiver desatualizado —
+ * seguro de rodar mais de uma vez (idempotente).
+ */
+export async function recalculateInvoiceMonths(): Promise<number> {
+  const user = await requireUser();
+  const cards = await prisma.creditCard.findMany({ where: { userId: user.id } });
+
+  let fixedCount = 0;
+
+  for (const card of cards) {
+    const transactions = await prisma.transaction.findMany({
+      where: { userId: user.id, creditCardId: card.id, isInvoicePayment: false },
+      select: { id: true, date: true, invoiceMonth: true },
+    });
+
+    const corrections = transactions
+      .map((t) => ({ id: t.id, oldMonth: t.invoiceMonth, newMonth: getInvoiceMonth(t.date, card.closingDay, card.dueDay) }))
+      .filter((t) => t.oldMonth !== t.newMonth);
+
+    if (corrections.length === 0) continue;
+
+    const offset = dueMonthOffset(card.closingDay, card.dueDay);
+    const payments = await prisma.invoicePayment.findMany({
+      where: { userId: user.id, creditCardId: card.id },
+      select: { id: true, invoiceMonth: true },
+    });
+    // O deslocamento é sempre positivo aqui — processar do mês mais recente
+    // para o mais antigo evita colidir com a constraint única
+    // (creditCardId, invoiceMonth) enquanto os registros ainda não migrados
+    // ocupam o mês de destino.
+    payments.sort((a, b) => (a.invoiceMonth < b.invoiceMonth ? 1 : -1));
+
+    await prisma.$transaction([
+      ...corrections.map((c) => prisma.transaction.update({ where: { id: c.id }, data: { invoiceMonth: c.newMonth } })),
+      ...payments.map((p) => prisma.invoicePayment.update({ where: { id: p.id }, data: { invoiceMonth: addMonthsToKey(p.invoiceMonth, offset) } })),
+    ]);
+
+    fixedCount += corrections.length;
+  }
+
+  if (fixedCount > 0) revalidatePath("/", "layout");
+  return fixedCount;
 }
 
 export async function payInvoice(creditCardId: string, invoiceMonth: string, accountId: string, amount: number, paidDate: string) {

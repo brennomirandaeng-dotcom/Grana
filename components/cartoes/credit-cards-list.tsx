@@ -10,7 +10,7 @@ import { EmptyState } from "@/components/shared/empty-state";
 import { ConfirmationModal } from "@/components/shared/confirmation-modal";
 import { CreditCardModal } from "@/components/cartoes/credit-card-modal";
 import { InstallmentPurchaseModal } from "@/components/cartoes/installment-purchase-modal";
-import { archiveCreditCard, deleteCreditCard } from "@/lib/actions/credit-cards";
+import { archiveCreditCard, deleteCreditCard, recalculateInvoiceMonths } from "@/lib/actions/credit-cards";
 import { toast } from "@/hooks/use-toast";
 import { CreditCard as CardIcon, Plus, ShoppingCart, MoreHorizontal, Pencil, Archive, ArchiveRestore, Trash2 } from "lucide-react";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
@@ -37,6 +37,19 @@ export function CreditCardsList({ cards, categories }: { cards: CardRow[]; categ
   const [editing, setEditing] = React.useState<CardRow | null>(null);
   const [deletingId, setDeletingId] = React.useState<string | null>(null);
   const [busy, setBusy] = React.useState(false);
+
+  // Corrige, uma vez, o mes de fatura de lancamentos criados antes do
+  // calculo passar a considerar o dia de vencimento (nao so o de
+  // fechamento). Idempotente: nao faz nada se ja estiver tudo correto.
+  React.useEffect(() => {
+    recalculateInvoiceMonths().then((fixedCount) => {
+      if (fixedCount > 0) {
+        toast({ title: `${fixedCount} lançamento(s) com fatura corrigida`, variant: "success" });
+        refresh("Atualizando faturas...");
+      }
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   async function handleArchive(id: string, archived: boolean) {
     setBusy(true);
