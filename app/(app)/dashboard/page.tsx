@@ -27,9 +27,9 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
     getAccountsWithBalance(user.id),
     getNetWorth(user.id),
     getPeriodSummary(user.id, range),
-    getMonthlySeries(user.id, 8),
-    getExpensesByCategory(user.id, range),
-    getExpensesByCategory(user.id, prevRange),
+    getMonthlySeries(user.id, 8, true),
+    getExpensesByCategory(user.id, range, true),
+    getExpensesByCategory(user.id, prevRange, true),
     getInsights(user.id),
     getUpcomingItems(user.id),
     prisma.investment.aggregate({ where: { userId: user.id }, _sum: { currentAmount: true } }),
@@ -58,7 +58,8 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
           balance={balance}
           balanceChange={balanceChange}
           income={summary.income}
-          expense={summary.expense}
+          expense={summary.expenseAll}
+          expensePaid={summary.expense}
           result={summary.result}
           investments={round2(investmentsTotal._sum.currentAmount ?? 0)}
           netWorth={netWorth.netWorth}
