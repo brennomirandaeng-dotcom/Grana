@@ -83,7 +83,7 @@ export async function createTransaction(raw: TransactionInput) {
             installmentPurchaseId: purchase.id,
             installmentNumber: idx + 1,
             paymentMethod: "CREDITO",
-            status: "PAGO",
+            status: data.status,
             notes: data.notes || null,
           },
         })
