@@ -20,13 +20,17 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     image: session.user.image,
   };
   const isAdmin = dbUser.role === "ADMIN";
+  // Enquanto nenhum admin existir, mostra o link para qualquer usuário —
+  // é a única forma de chegar até a tela que faz o bootstrap do primeiro
+  // admin (senão o link nunca apareceria pra ninguém poder criá-lo).
+  const showAdminLink = isAdmin || (!isAdmin && (await prisma.user.count({ where: { role: "ADMIN" } })) === 0);
 
   return (
     <QuickAddProvider>
       <div className="flex min-h-screen w-full">
         <Sidebar />
         <div className="flex-1 flex flex-col lg:pl-64 min-w-0">
-          <Header user={user} isAdmin={isAdmin} />
+          <Header user={user} isAdmin={showAdminLink} />
           <main className="flex-1 px-4 py-6 lg:px-8 lg:py-8 pb-24 lg:pb-8 max-w-[1600px] w-full mx-auto">{children}</main>
         </div>
       </div>
