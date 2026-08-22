@@ -160,31 +160,57 @@ export async function updateTransaction(id: string, raw: TransactionInput) {
   let creditCardId: string | null = null;
   let invoiceMonth: string | null = null;
   let accountId: string | null = data.accountId ?? null;
+  let card: { closingDay: number; dueDay: number } | null = null;
 
   if (data.paymentMethod === "CREDITO" && raw.creditCardId) {
-    const card = await prisma.creditCard.findFirst({ where: { id: raw.creditCardId, userId: user.id } });
-    if (!card) throw new Error("Cartão inválido");
-    creditCardId = card.id;
-    invoiceMonth = getInvoiceMonth(new Date(data.date), card.closingDay, card.dueDay);
+    const found = await prisma.creditCard.findFirst({ where: { id: raw.creditCardId, userId: user.id } });
+    if (!found) throw new Error("Cartão inválido");
+    card = found;
+    creditCardId = found.id;
+    invoiceMonth = getInvoiceMonth(new Date(data.date), found.closingDay, found.dueDay);
     accountId = null;
   }
 
-  await prisma.transaction.update({
-    where: { id },
-    data: {
-      type: data.type,
-      description: data.description,
-      amount: data.amount,
-      date: new Date(data.date),
-      categoryId: data.categoryId || null,
-      accountId: data.type === "TRANSFER" ? data.accountId : accountId,
-      transferToAccountId: data.type === "TRANSFER" ? data.transferToAccountId : null,
-      paymentMethod: data.paymentMethod,
-      status: data.status,
-      notes: data.notes || null,
-      creditCardId,
-      invoiceMonth,
-    },
+  const newDate = new Date(data.date);
+
+  await prisma.$transaction(async (tx) => {
+    await tx.transaction.update({
+      where: { id },
+      data: {
+        type: data.type,
+        description: data.description,
+        amount: data.amount,
+        date: newDate,
+        categoryId: data.categoryId || null,
+        accountId: data.type === "TRANSFER" ? data.accountId : accountId,
+        transferToAccountId: data.type === "TRANSFER" ? data.transferToAccountId : null,
+        paymentMethod: data.paymentMethod,
+        status: data.status,
+        notes: data.notes || null,
+        creditCardId,
+        invoiceMonth,
+      },
+    });
+
+    // Compra parcelada: ao mudar a data de uma parcela, desloca as demais
+    // parcelas da mesma compra pelo mesmo número de meses, preservando o
+    // espaçamento original entre elas (ex: 1ª de 01/02 pra 01/05 -> 2ª
+    // que era 01/03 vai pra 01/06).
+    if (existing.installmentPurchaseId && card) {
+      const deltaMonths = (newDate.getFullYear() - existing.date.getFullYear()) * 12 + (newDate.getMonth() - existing.date.getMonth());
+      if (deltaMonths !== 0) {
+        const siblings = await tx.transaction.findMany({
+          where: { installmentPurchaseId: existing.installmentPurchaseId, userId: user.id, id: { not: id } },
+        });
+        for (const sibling of siblings) {
+          const siblingDate = addPeriod(sibling.date, "MENSAL", deltaMonths);
+          await tx.transaction.update({
+            where: { id: sibling.id },
+            data: { date: siblingDate, invoiceMonth: getInvoiceMonth(siblingDate, card.closingDay, card.dueDay) },
+          });
+        }
+      }
+    }
   });
 
   revalidatePath("/", "layout");
