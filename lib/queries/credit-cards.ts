@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { round2, getInvoiceMonth } from "@/lib/finance";
+import { transactionInclude } from "@/lib/queries/transactions";
 
 export async function getCreditCardsWithUsage(userId: string) {
   const cards = await prisma.creditCard.findMany({ where: { userId }, orderBy: { createdAt: "asc" } });
@@ -38,7 +39,7 @@ export async function getCardInvoice(userId: string, creditCardId: string, invoi
   const [purchases, payment] = await Promise.all([
     prisma.transaction.findMany({
       where: { userId, creditCardId, invoiceMonth, isInvoicePayment: false },
-      include: { category: true, installmentPurchase: true },
+      include: transactionInclude,
       orderBy: { date: "desc" },
     }),
     prisma.invoicePayment.findUnique({ where: { creditCardId_invoiceMonth: { creditCardId, invoiceMonth } } }),
