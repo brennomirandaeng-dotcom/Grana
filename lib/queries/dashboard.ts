@@ -124,22 +124,13 @@ export async function getUpcomingItems(userId: string, days = 14) {
 }
 
 /**
- * Despesas ainda não pagas (Pendente ou Agendado), sem limite de data —
- * inclui vencidas e futuras, diferente de "Próximos vencimentos" (que só
- * olha os próximos dias e qualquer tipo de lançamento).
+ * Total de despesas ainda não pagas (Pendente ou Agendado), sem limite de
+ * data — inclui vencidas e futuras.
  */
-export async function getPendingExpenses(userId: string, limit = 12) {
-  const where = { userId, type: "EXPENSE" as const, isInvoicePayment: false, status: { in: ["PENDENTE", "AGENDADO"] } };
-
-  const [items, totalAgg] = await Promise.all([
-    prisma.transaction.findMany({
-      where,
-      include: { category: true, account: true, creditCard: true, installmentPurchase: true, transferToAccount: true },
-      orderBy: { date: "asc" },
-      take: limit,
-    }),
-    prisma.transaction.aggregate({ where, _sum: { amount: true }, _count: true }),
-  ]);
-
-  return { items, total: round2(totalAgg._sum.amount ?? 0), count: totalAgg._count };
+export async function getPendingExpensesTotal(userId: string) {
+  const result = await prisma.transaction.aggregate({
+    where: { userId, type: "EXPENSE", isInvoicePayment: false, status: { in: ["PENDENTE", "AGENDADO"] } },
+    _sum: { amount: true },
+  });
+  return round2(result._sum.amount ?? 0);
 }
