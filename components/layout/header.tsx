@@ -1,7 +1,7 @@
 "use client";
 import * as React from "react";
 import { useNavigateWithBusy } from "@/hooks/use-navigate-with-busy";
-import { Search, Menu, Sun, Moon, LogOut, Settings, User as UserIcon } from "lucide-react";
+import { Search, Menu, Sun, Moon, LogOut, Settings, Shield, User as UserIcon } from "lucide-react";
 import { signOut } from "next-auth/react";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -21,9 +21,10 @@ import Link from "next/link";
 
 interface HeaderProps {
   user: { name: string; email: string; image?: string | null };
+  isAdmin?: boolean;
 }
 
-export function Header({ user }: HeaderProps) {
+export function Header({ user, isAdmin }: HeaderProps) {
   const { navigate } = useNavigateWithBusy("Buscando...");
   const { theme, setTheme } = useTheme();
   const [query, setQuery] = React.useState("");
@@ -88,6 +89,14 @@ export function Header({ user }: HeaderProps) {
               <LinkBusyBridge message="Carregando..." />
             </Link>
           </DropdownMenuItem>
+          {isAdmin && (
+            <DropdownMenuItem asChild>
+              <Link href="/admin/usuarios">
+                <Shield className="h-4 w-4" /> Administração
+                <LinkBusyBridge message="Carregando..." />
+              </Link>
+            </DropdownMenuItem>
+          )}
           <DropdownMenuSeparator />
           <DropdownMenuItem destructive onClick={() => signOut({ callbackUrl: "/login" })}>
             <LogOut className="h-4 w-4" /> Sair

@@ -48,6 +48,12 @@ export const RECURRENCE_FREQUENCIES = {
 } as const;
 export type RecurrenceFrequency = keyof typeof RECURRENCE_FREQUENCIES;
 
+export const USER_ROLES = {
+  USER: "Usuário",
+  ADMIN: "Administrador",
+} as const;
+export type UserRole = keyof typeof USER_ROLES;
+
 export const GOAL_MOVEMENT_TYPES = {
   DEPOSIT: "Depósito",
   WITHDRAW: "Retirada",

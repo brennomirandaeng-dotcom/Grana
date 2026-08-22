@@ -1,6 +1,6 @@
 "use client";
 import * as React from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { signIn } from "next-auth/react";
 import { Button } from "@/components/ui/button";
@@ -8,6 +8,16 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { AuthShell } from "@/components/shared/auth-shell";
 import { Loader2 } from "lucide-react";
+
+function DeactivatedNotice() {
+  const searchParams = useSearchParams();
+  if (searchParams.get("desativado") !== "1") return null;
+  return (
+    <p className="mb-4 rounded-lg border border-negative/30 bg-negative-bg px-3 py-2 text-sm text-negative">
+      Sua conta foi desativada. Entre em contato com o administrador.
+    </p>
+  );
+}
 
 export default function LoginPage() {
   const router = useRouter();
@@ -39,6 +49,10 @@ export default function LoginPage() {
         <h2 className="text-2xl font-semibold text-foreground">Entrar</h2>
         <p className="text-sm text-muted-foreground">Acesse sua conta para continuar.</p>
       </div>
+
+      <React.Suspense fallback={null}>
+        <DeactivatedNotice />
+      </React.Suspense>
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
