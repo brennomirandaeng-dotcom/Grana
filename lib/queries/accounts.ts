@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { round2 } from "@/lib/finance";
+import { transactionInclude } from "@/lib/queries/transactions";
 
 export async function getAccountsWithBalance(userId: string) {
   const accounts = await prisma.account.findMany({ where: { userId }, orderBy: { createdAt: "asc" } });
@@ -28,4 +29,15 @@ export async function getAccountsWithBalance(userId: string) {
 export async function getAccountTransactionCounts(userId: string) {
   const rows = await prisma.transaction.groupBy({ by: ["accountId"], where: { userId, accountId: { not: null } }, _count: { _all: true } });
   return Object.fromEntries(rows.map((r) => [r.accountId as string, r._count._all]));
+}
+
+// Lançamentos que entraram ou saíram de uma conta: os que têm a conta como
+// origem (accountId) e as transferências que a têm como destino
+// (transferToAccountId) — uma transferência recebida não grava accountId.
+export async function getAccountTransactions(userId: string, accountId: string) {
+  return prisma.transaction.findMany({
+    where: { userId, OR: [{ accountId }, { transferToAccountId: accountId }] },
+    include: transactionInclude,
+    orderBy: [{ date: "desc" }, { createdAt: "desc" }],
+  });
 }
