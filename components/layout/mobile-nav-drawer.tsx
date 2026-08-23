@@ -18,7 +18,7 @@ export function MobileNavDrawer({ open, onOpenChange }: { open: boolean; onOpenC
           <DialogTitle>Menu de navegação</DialogTitle>
         </VisuallyHidden>
         <div className="flex items-center px-6 h-16 border-b border-border text-foreground">
-          <Logo className="h-8 w-24" />
+          <Logo className="h-11 w-36" />
         </div>
         <nav className="p-3 space-y-0.5">
           {NAV_ITEMS.map((item) => {
