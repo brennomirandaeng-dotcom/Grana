@@ -82,13 +82,13 @@ export function ExpectedIncomeList({ expectedIncomes }: { expectedIncomes: Expec
         <div className="space-y-2">
           {expectedIncomes.map((e) => (
             <Card key={e.id}>
-              <CardContent className="p-4 flex items-center justify-between gap-4">
+              <CardContent className="p-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
                 <div className="flex items-center gap-3 min-w-0">
                   <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-positive/10 text-positive">
                     <Coins className="h-4 w-4" />
                   </span>
                   <div className="min-w-0">
-                    <p className="font-medium text-foreground truncate">{e.description}</p>
+                    <p className="font-medium text-foreground break-words sm:truncate">{e.description}</p>
                     <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-0.5">
                       <span className="text-xs text-muted-foreground">Previsto para {formatDate(e.date)}</span>
                       {e.confirmed ? (
@@ -104,7 +104,7 @@ export function ExpectedIncomeList({ expectedIncomes }: { expectedIncomes: Expec
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2 shrink-0">
+                <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
                   <span className="font-semibold tabular-nums">{formatCurrency(e.amount)}</span>
                   {!e.confirmed && (
                     <Button size="sm" variant="secondary" onClick={() => setConfirming(e)}>
