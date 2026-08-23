@@ -1,12 +1,12 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Wallet } from "lucide-react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { NAV_ITEMS } from "@/lib/nav";
 import { cn } from "@/lib/utils";
 import { VisuallyHidden } from "@/components/shared/visually-hidden";
 import { LinkBusyBridge } from "@/components/shared/link-busy-bridge";
+import { Logo } from "@/components/shared/logo";
 
 export function MobileNavDrawer({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
   const pathname = usePathname();
@@ -17,11 +17,8 @@ export function MobileNavDrawer({ open, onOpenChange }: { open: boolean; onOpenC
         <VisuallyHidden>
           <DialogTitle>Menu de navegação</DialogTitle>
         </VisuallyHidden>
-        <div className="flex items-center gap-2 px-6 h-16 border-b border-border">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand text-brand-foreground">
-            <Wallet className="h-4 w-4" />
-          </div>
-          <span className="font-semibold text-foreground">Finanças</span>
+        <div className="flex items-center px-6 h-16 border-b border-border text-foreground">
+          <Logo className="h-8 w-24" />
         </div>
         <nav className="p-3 space-y-0.5">
           {NAV_ITEMS.map((item) => {
