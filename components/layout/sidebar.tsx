@@ -1,21 +1,18 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Wallet } from "lucide-react";
 import { NAV_ITEMS } from "@/lib/nav";
 import { cn } from "@/lib/utils";
 import { LinkBusyBridge } from "@/components/shared/link-busy-bridge";
+import { Logo } from "@/components/shared/logo";
 
 export function Sidebar() {
   const pathname = usePathname();
 
   return (
     <aside className="hidden lg:flex fixed inset-y-0 left-0 z-30 w-64 flex-col border-r border-border bg-surface">
-      <div className="flex items-center gap-2 px-6 h-16 border-b border-border shrink-0">
-        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand text-brand-foreground">
-          <Wallet className="h-4 w-4" />
-        </div>
-        <span className="font-semibold text-foreground">Finanças</span>
+      <div className="flex items-center px-6 h-16 border-b border-border shrink-0 text-foreground">
+        <Logo className="h-8 w-24" />
       </div>
 
       <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-0.5">
