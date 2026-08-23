@@ -6,9 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
+import { CurrencyInput } from "@/components/shared/currency-input";
 import { confirmExpectedIncome } from "@/lib/actions/expected-income";
 import { toast } from "@/hooks/use-toast";
-import { formatCurrency } from "@/lib/format";
 import { Loader2 } from "lucide-react";
 
 interface Account {
@@ -26,17 +26,18 @@ export function ConfirmIncomeModal({
   onOpenChange,
   expectedIncomeId,
   description,
-  amount,
+  predictedAmount,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   expectedIncomeId: string;
   description: string;
-  amount: number;
+  predictedAmount: number;
 }) {
   const { refresh } = useActionRefresh();
   const [accounts, setAccounts] = React.useState<Account[]>([]);
   const [accountId, setAccountId] = React.useState("");
+  const [amount, setAmount] = React.useState(predictedAmount);
   const [receivedDate, setReceivedDate] = React.useState(todayISO());
   const [saving, setSaving] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
@@ -48,6 +49,7 @@ export function ConfirmIncomeModal({
     setPrevOpen(open);
     if (open) {
       setAccountId("");
+      setAmount(predictedAmount);
       setReceivedDate(todayISO());
       setError(null);
     }
@@ -65,7 +67,7 @@ export function ConfirmIncomeModal({
     setSaving(true);
     setError(null);
     try {
-      await confirmExpectedIncome(expectedIncomeId, { accountId, receivedDate });
+      await confirmExpectedIncome(expectedIncomeId, { accountId, receivedDate, amount });
       toast({ title: "Receita confirmada", variant: "success" });
       onOpenChange(false);
       refresh("Confirmando receita...");
@@ -81,11 +83,13 @@ export function ConfirmIncomeModal({
       <DialogContent size="sm">
         <DialogHeader>
           <DialogTitle>Confirmar recebimento</DialogTitle>
-          <DialogDescription>
-            {description} · {formatCurrency(amount)}
-          </DialogDescription>
+          <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <Label>Valor recebido</Label>
+            <CurrencyInput value={amount} onChange={setAmount} autoFocus />
+          </div>
           <div>
             <Label>Em qual conta o dinheiro entrou?</Label>
             <Select value={accountId} onValueChange={setAccountId}>
@@ -112,7 +116,7 @@ export function ConfirmIncomeModal({
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>
               Cancelar
             </Button>
-            <Button type="submit" disabled={saving || !accountId}>
+            <Button type="submit" disabled={saving || !accountId || amount <= 0}>
               {saving && <Loader2 className="h-4 w-4 animate-spin" />}
               {saving ? "Confirmando..." : "Confirmar"}
             </Button>

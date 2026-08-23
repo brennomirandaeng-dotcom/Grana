@@ -138,6 +138,7 @@ export const expectedIncomeSchema = z.object({
 export const confirmExpectedIncomeSchema = z.object({
   accountId: z.string().min(1, "Selecione a conta"),
   receivedDate: z.string().min(1, "Informe a data em que recebeu"),
+  amount: z.number().positive("O valor deve ser maior que zero"),
 });
 
 export const assetSchema = z.object({
