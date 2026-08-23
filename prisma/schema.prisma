@@ -47,6 +47,7 @@ model User {
   liabilities     Liability[]
   invoicePayments InvoicePayment[]
   netWorthSnapshots NetWorthSnapshot[]
+  expectedIncomes ExpectedIncome[]
 }
 
 // ==================== CONTAS ====================
@@ -128,12 +129,35 @@ model Transaction {
   isInvoicePayment Boolean @default(false) // true = lançamento de pagamento de fatura de cartão
   invoicePaymentCardId String?
 
+  expectedIncome ExpectedIncome?
+
   createdAt   DateTime          @default(now())
   updatedAt   DateTime          @updatedAt
 
   @@index([userId, date])
   @@index([userId, type])
   @@index([creditCardId, invoiceMonth])
+}
+
+// ==================== RECEITAS PREVISTAS ====================
+// Receita ainda não recebida. Ao confirmar o recebimento, gera um
+// Transaction (type INCOME) e passa a contar como receita recebida —
+// até lá, não entra nos lançamentos nem nos totais de receitas do dashboard.
+
+model ExpectedIncome {
+  id            String       @id @default(cuid())
+  userId        String
+  user          User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  description   String
+  amount        Float
+  date          DateTime     // data prevista de recebimento
+  confirmed     Boolean      @default(false)
+  confirmedDate DateTime?    // data em que o recebimento foi confirmado
+  transactionId String?      @unique
+  transaction   Transaction? @relation(fields: [transactionId], references: [id], onDelete: SetNull)
+  createdAt     DateTime     @default(now())
+
+  @@index([userId, date])
 }
 
 // ==================== RECORRÊNCIAS ====================
