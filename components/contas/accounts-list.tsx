@@ -9,9 +9,11 @@ import { EmptyState } from "@/components/shared/empty-state";
 import { ConfirmationModal } from "@/components/shared/confirmation-modal";
 import { AccountModal } from "@/components/contas/account-modal";
 import { TransferModal } from "@/components/contas/transfer-modal";
+import { AccountDetailModal } from "@/components/contas/account-detail-modal";
 import { archiveAccount, deleteAccount } from "@/lib/actions/accounts";
 import { toast } from "@/hooks/use-toast";
 import { ACCOUNT_TYPES } from "@/lib/constants";
+import { cn } from "@/lib/utils";
 import { Landmark, Plus, ArrowLeftRight, MoreHorizontal, Pencil, Archive, ArchiveRestore, Trash2 } from "lucide-react";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 
@@ -33,6 +35,7 @@ export function AccountsList({ accounts }: { accounts: AccountRow[] }) {
   const [transferOpen, setTransferOpen] = React.useState(false);
   const [editing, setEditing] = React.useState<AccountRow | null>(null);
   const [deletingId, setDeletingId] = React.useState<string | null>(null);
+  const [viewing, setViewing] = React.useState<AccountRow | null>(null);
   const [busy, setBusy] = React.useState(false);
 
   const activeAccounts = accounts.filter((a) => !a.archived);
@@ -100,7 +103,19 @@ export function AccountsList({ accounts }: { accounts: AccountRow[] }) {
       ) : (
         <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-4">
           {accounts.map((a) => (
-            <Card key={a.id} className={a.archived ? "opacity-60" : ""}>
+            <Card
+              key={a.id}
+              role="button"
+              tabIndex={0}
+              onClick={() => setViewing(a)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  setViewing(a);
+                }
+              }}
+              className={cn("cursor-pointer transition-colors hover:bg-surface-muted", a.archived && "opacity-60")}
+            >
               <CardContent className="p-5">
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-2.5">
@@ -114,11 +129,11 @@ export function AccountsList({ accounts }: { accounts: AccountRow[] }) {
                   </div>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="iconSm">
+                      <Button variant="ghost" size="iconSm" onClick={(e) => e.stopPropagation()}>
                         <MoreHorizontal className="h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
+                    <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
                       <DropdownMenuItem
                         onClick={() => {
                           setEditing(a);
@@ -154,6 +169,9 @@ export function AccountsList({ accounts }: { accounts: AccountRow[] }) {
 
       <AccountModal open={modalOpen} onOpenChange={setModalOpen} account={editing} />
       <TransferModal open={transferOpen} onOpenChange={setTransferOpen} accounts={activeAccounts} />
+      {viewing && (
+        <AccountDetailModal open={!!viewing} onOpenChange={(o) => !o && setViewing(null)} accountId={viewing.id} accountName={viewing.name} />
+      )}
       <ConfirmationModal
         open={!!deletingId}
         onOpenChange={(o) => !o && setDeletingId(null)}
