@@ -1,6 +1,7 @@
 import {
   LayoutDashboard,
   ArrowLeftRight,
+  Coins,
   Landmark,
   CreditCard,
   PieChart,
@@ -22,6 +23,7 @@ export interface NavItem {
 export const NAV_ITEMS: NavItem[] = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { label: "Lançamentos", href: "/lancamentos", icon: ArrowLeftRight },
+  { label: "Receitas previstas", href: "/receitas-previstas", icon: Coins },
   { label: "Contas", href: "/contas", icon: Landmark },
   { label: "Cartões", href: "/cartoes", icon: CreditCard },
   { label: "Orçamento", href: "/orcamento", icon: PieChart },
@@ -36,7 +38,7 @@ export const NAV_ITEMS: NavItem[] = [
 export const MOBILE_NAV_ITEMS: NavItem[] = [
   NAV_ITEMS[0],
   NAV_ITEMS[1],
-  NAV_ITEMS[2],
   NAV_ITEMS[3],
-  NAV_ITEMS[10],
+  NAV_ITEMS[4],
+  NAV_ITEMS[11],
 ];

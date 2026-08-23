@@ -129,6 +129,17 @@ export const investmentTransferSchema = z.object({
   toInvestmentId: z.string().min(1, "Selecione o investimento de destino"),
 });
 
+export const expectedIncomeSchema = z.object({
+  description: z.string().min(1, "Informe a descrição"),
+  amount: z.number().positive("O valor deve ser maior que zero"),
+  date: z.string().min(1, "Informe a data prevista"),
+});
+
+export const confirmExpectedIncomeSchema = z.object({
+  accountId: z.string().min(1, "Selecione a conta"),
+  receivedDate: z.string().min(1, "Informe a data em que recebeu"),
+});
+
 export const assetSchema = z.object({
   name: z.string().min(1),
   type: z.enum(["VEICULO", "IMOVEL", "OUTRO"]),
