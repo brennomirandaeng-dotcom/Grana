@@ -146,7 +146,7 @@ export function ExpectedIncomeList({ expectedIncomes }: { expectedIncomes: Expec
           onOpenChange={(o) => !o && setConfirming(null)}
           expectedIncomeId={confirming.id}
           description={confirming.description}
-          amount={confirming.amount}
+          predictedAmount={confirming.amount}
         />
       )}
       <ConfirmationModal

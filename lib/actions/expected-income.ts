@@ -66,7 +66,7 @@ export async function confirmExpectedIncome(id: string, raw: z.infer<typeof conf
         userId: user.id,
         type: "INCOME",
         description: existing.description,
-        amount: existing.amount,
+        amount: data.amount,
         date: receivedDate,
         accountId: account.id,
         paymentMethod: "TRANSFERENCIA",
@@ -75,7 +75,7 @@ export async function confirmExpectedIncome(id: string, raw: z.infer<typeof conf
     });
     await tx.expectedIncome.update({
       where: { id },
-      data: { confirmed: true, confirmedDate: receivedDate, transactionId: transaction.id },
+      data: { amount: data.amount, confirmed: true, confirmedDate: receivedDate, transactionId: transaction.id },
     });
   });
 
