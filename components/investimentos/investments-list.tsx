@@ -9,13 +9,14 @@ import { EmptyState } from "@/components/shared/empty-state";
 import { ConfirmationModal } from "@/components/shared/confirmation-modal";
 import { InvestmentModal } from "@/components/investimentos/investment-modal";
 import { WithdrawModal } from "@/components/investimentos/withdraw-modal";
+import { TransferInvestmentModal } from "@/components/investimentos/transfer-investment-modal";
 import { PortfolioChart } from "@/components/investimentos/portfolio-chart";
 import { deleteInvestment } from "@/lib/actions/investments";
 import { toast } from "@/hooks/use-toast";
 import { INVESTMENT_CATEGORIES } from "@/lib/constants";
 import { formatCurrency, formatPercent } from "@/lib/format";
 import { round2 } from "@/lib/finance";
-import { TrendingUp, Plus, MoreHorizontal, Pencil, Trash2, ArrowDownToLine } from "lucide-react";
+import { TrendingUp, Plus, MoreHorizontal, Pencil, Trash2, ArrowDownToLine, ArrowLeftRight } from "lucide-react";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 
 export interface InvestmentRow {
@@ -34,6 +35,7 @@ export function InvestmentsList({ investments }: { investments: InvestmentRow[] 
   const [editing, setEditing] = React.useState<InvestmentRow | null>(null);
   const [deletingId, setDeletingId] = React.useState<string | null>(null);
   const [withdrawing, setWithdrawing] = React.useState<InvestmentRow | null>(null);
+  const [transferring, setTransferring] = React.useState<InvestmentRow | null>(null);
   const [busy, setBusy] = React.useState(false);
 
   const totalInvested = round2(investments.reduce((s, i) => s + i.investedAmount, 0));
@@ -170,6 +172,9 @@ export function InvestmentsList({ investments }: { investments: InvestmentRow[] 
                               <DropdownMenuItem disabled={inv.currentAmount <= 0} onClick={() => setWithdrawing(inv)}>
                                 <ArrowDownToLine className="h-4 w-4" /> Sacar
                               </DropdownMenuItem>
+                              <DropdownMenuItem disabled={inv.currentAmount <= 0 || investments.length < 2} onClick={() => setTransferring(inv)}>
+                                <ArrowLeftRight className="h-4 w-4" /> Transferir
+                              </DropdownMenuItem>
                               <DropdownMenuItem destructive onClick={() => setDeletingId(inv.id)}>
                                 <Trash2 className="h-4 w-4" /> Excluir
                               </DropdownMenuItem>
@@ -195,6 +200,16 @@ export function InvestmentsList({ investments }: { investments: InvestmentRow[] 
           investmentId={withdrawing.id}
           investmentName={withdrawing.name}
           currentAmount={withdrawing.currentAmount}
+        />
+      )}
+      {transferring && (
+        <TransferInvestmentModal
+          open={!!transferring}
+          onOpenChange={(o) => !o && setTransferring(null)}
+          investmentId={transferring.id}
+          investmentName={transferring.name}
+          currentAmount={transferring.currentAmount}
+          otherInvestments={investments.filter((i) => i.id !== transferring.id)}
         />
       )}
     </div>

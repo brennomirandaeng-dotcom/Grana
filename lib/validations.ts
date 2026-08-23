@@ -124,6 +124,11 @@ export const investmentWithdrawSchema = z.object({
   notes: z.string().optional().nullable(),
 });
 
+export const investmentTransferSchema = z.object({
+  amount: z.number().positive("O valor deve ser maior que zero"),
+  toInvestmentId: z.string().min(1, "Selecione o investimento de destino"),
+});
+
 export const assetSchema = z.object({
   name: z.string().min(1),
   type: z.enum(["VEICULO", "IMOVEL", "OUTRO"]),
