@@ -12,7 +12,7 @@ export function Sidebar() {
   return (
     <aside className="hidden lg:flex fixed inset-y-0 left-0 z-30 w-64 flex-col border-r border-border bg-surface">
       <div className="flex items-center px-6 h-16 border-b border-border shrink-0 text-foreground">
-        <Logo className="h-8 w-24" />
+        <Logo className="h-11 w-36" />
       </div>
 
       <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-0.5">
