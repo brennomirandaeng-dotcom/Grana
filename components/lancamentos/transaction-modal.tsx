@@ -216,7 +216,13 @@ export function TransactionModal({ open, onOpenChange, defaultType, editing }: T
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <Tabs value={type} onValueChange={(v) => setType(v as TxType)}>
+          <Tabs
+            value={type}
+            onValueChange={(v) => {
+              setType(v as TxType);
+              if (v === "INCOME") setPaymentMethod("PIX");
+            }}
+          >
             <TabsList className="w-full grid grid-cols-3">
               <TabsTrigger value="EXPENSE">Despesa</TabsTrigger>
               <TabsTrigger value="INCOME">Receita</TabsTrigger>
@@ -290,6 +296,22 @@ export function TransactionModal({ open, onOpenChange, defaultType, editing }: T
                   </SelectContent>
                 </Select>
               </div>
+            </div>
+          ) : type === "INCOME" ? (
+            <div>
+              <Label>Conta</Label>
+              <Select value={accountId} onValueChange={setAccountId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione a conta" />
+                </SelectTrigger>
+                <SelectContent>
+                  {activeAccounts.map((a) => (
+                    <SelectItem key={a.id} value={a.id}>
+                      {a.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           ) : (
             <div className="grid grid-cols-2 gap-4">
