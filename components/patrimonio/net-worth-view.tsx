@@ -60,6 +60,8 @@ export function NetWorthView({
       else await deleteLiability(deleting.id);
       toast({ title: "Removido com sucesso", variant: "success" });
       refresh("Removendo item...");
+    } catch (err) {
+      toast({ title: err instanceof Error ? err.message : "Erro ao excluir", variant: "destructive" });
     } finally {
       setBusy(false);
       setDeleting(null);

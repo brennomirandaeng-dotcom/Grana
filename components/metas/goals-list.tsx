@@ -57,6 +57,8 @@ export function GoalsList({ goals }: { goals: GoalRow[] }) {
       await deleteGoal(deletingId);
       toast({ title: "Meta excluída", variant: "success" });
       refresh("Excluindo meta...");
+    } catch (err) {
+      toast({ title: err instanceof Error ? err.message : "Não foi possível excluir a meta", variant: "destructive" });
     } finally {
       setBusy(false);
       setDeletingId(null);
