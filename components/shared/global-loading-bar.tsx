@@ -5,8 +5,8 @@ import { cn } from "@/lib/utils";
 
 const GROW_TARGET = 88; // nunca chega a 100% sozinha — só ao finalizar
 const GROW_DURATION_MS = 7000; // crescimento lento, dá impressão de progresso real
-const FINISH_DURATION_MS = 200;
-const FADE_OUT_DELAY_MS = 250; // segura a barra cheia por um instante antes de sumir
+const FINISH_DURATION_MS = 120;
+const FADE_OUT_DELAY_MS = 100; // segura a barra cheia por um instante antes de sumir
 
 /**
  * Barra fina no topo da tela que se enche progressivamente enquanto alguma
@@ -64,7 +64,7 @@ export function GlobalLoadingBar() {
       aria-hidden={!visible}
       aria-label={visible ? "Carregando" : undefined}
       className={cn(
-        "fixed top-0 inset-x-0 z-[200] h-[3px] overflow-hidden pointer-events-none transition-opacity duration-300",
+        "fixed top-0 inset-x-0 z-[200] h-[3px] overflow-hidden pointer-events-none transition-opacity duration-150",
         visible ? "opacity-100" : "opacity-0"
       )}
     >

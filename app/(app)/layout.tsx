@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { adminExists } from "@/lib/session";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Header } from "@/components/layout/header";
 import { MobileBottomNav } from "@/components/layout/mobile-bottom-nav";
@@ -23,7 +24,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   // Enquanto nenhum admin existir, mostra o link para qualquer usuário —
   // é a única forma de chegar até a tela que faz o bootstrap do primeiro
   // admin (senão o link nunca apareceria pra ninguém poder criá-lo).
-  const showAdminLink = isAdmin || (!isAdmin && (await prisma.user.count({ where: { role: "ADMIN" } })) === 0);
+  const showAdminLink = isAdmin || !(await adminExists());
 
   return (
     <QuickAddProvider>

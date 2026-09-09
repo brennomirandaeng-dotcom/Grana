@@ -1,6 +1,27 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
+// Memoizado em memória (por instância do servidor) só pro lado "true": uma
+// vez que exista um admin, isso nunca deixa de ser verdade na prática, então
+// não há necessidade de reconferir no banco. O lado "false" nunca é
+// cacheado — sempre reconsulta ao vivo, já que é o estado transitório de
+// bootstrap (antes do primeiro admin existir) onde a resposta correta
+// importa a cada requisição.
+let cachedAdminExists = false;
+
+/**
+ * Se já existe algum administrador cadastrado. Usado no layout raiz — que
+ * roda em toda navegação e a cada router.refresh() depois de qualquer ação
+ * — só pra decidir se o link "Administração" aparece pra quem ainda não é
+ * admin. Sem essa memoização, toda ação de todo usuário comum pagava uma
+ * consulta extra ao banco só pra essa checagem.
+ */
+export async function adminExists() {
+  if (cachedAdminExists) return true;
+  cachedAdminExists = (await prisma.user.count({ where: { role: "ADMIN" } })) > 0;
+  return cachedAdminExists;
+}
+
 /**
  * Retorna a sessão atual ou lança erro — usar em Server Actions/Components
  * dentro de rotas protegidas. Também confere se a conta ainda está ativa:
