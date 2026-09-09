@@ -23,7 +23,7 @@ export interface ExpectedIncomeRow {
   confirmedDate: Date | string | null;
 }
 
-export function ExpectedIncomeList({ expectedIncomes }: { expectedIncomes: ExpectedIncomeRow[] }) {
+export function ExpectedIncomeList({ expectedIncomes, hasFilters }: { expectedIncomes: ExpectedIncomeRow[]; hasFilters?: boolean }) {
   const { refresh } = useActionRefresh();
   const [modalOpen, setModalOpen] = React.useState(false);
   const [editing, setEditing] = React.useState<ExpectedIncomeRow | null>(null);
@@ -70,8 +70,12 @@ export function ExpectedIncomeList({ expectedIncomes }: { expectedIncomes: Expec
       {expectedIncomes.length === 0 ? (
         <EmptyState
           icon={Coins}
-          title="Nenhuma receita prevista"
-          description="Cadastre receitas que você espera receber e confirme quando o dinheiro cair na conta."
+          title={hasFilters ? "Nenhuma receita prevista neste mês" : "Nenhuma receita prevista"}
+          description={
+            hasFilters
+              ? "Tente outro mês ou cadastre uma nova receita prevista."
+              : "Cadastre receitas que você espera receber e confirme quando o dinheiro cair na conta."
+          }
           action={
             <Button onClick={() => setModalOpen(true)}>
               <Plus className="h-4 w-4" /> Nova receita prevista
