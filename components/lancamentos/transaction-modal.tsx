@@ -9,7 +9,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { CurrencyInput } from "@/components/shared/currency-input";
-import { PAYMENT_METHODS, TRANSACTION_STATUSES, RECURRENCE_FREQUENCIES, type PaymentMethod, type TransactionStatus, type RecurrenceFrequency } from "@/lib/constants";
+import { PAYMENT_METHODS, RECURRENCE_FREQUENCIES, type PaymentMethod, type TransactionStatus, type RecurrenceFrequency } from "@/lib/constants";
 import { createTransaction, updateTransaction, deleteTransaction } from "@/lib/actions/transactions";
 import { toast } from "@/hooks/use-toast";
 import { playCashRegisterSound } from "@/lib/sound";
@@ -369,20 +369,11 @@ export function TransactionModal({ open, onOpenChange, defaultType, editing }: T
           )}
 
           {type !== "TRANSFER" && (
-            <div>
-              <Label>Status</Label>
-              <Select value={status} onValueChange={setStatus}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {Object.entries(TRANSACTION_STATUSES).map(([key, label]) => (
-                    <SelectItem key={key} value={key}>
-                      {label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            <div className="flex items-center justify-between rounded-lg border border-border p-3">
+              <Label htmlFor="paid" className="mb-0">
+                Pago
+              </Label>
+              <Switch id="paid" checked={status === "PAGO"} onCheckedChange={(checked) => setStatus(checked ? "PAGO" : "PENDENTE")} />
             </div>
           )}
 
