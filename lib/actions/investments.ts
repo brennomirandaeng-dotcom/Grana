@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
-import { investmentSchema, investmentWithdrawSchema, investmentTransferSchema, parseInput } from "@/lib/validations";
+import { investmentSchema, investmentWithdrawSchema, investmentContributeSchema, investmentTransferSchema, parseInput } from "@/lib/validations";
 import { round2 } from "@/lib/finance";
 import { z } from "zod";
 
@@ -81,6 +81,46 @@ export async function withdrawInvestment(id: string, raw: z.infer<typeof investm
         amount: data.amount,
         date: new Date(data.date),
         transferToAccountId: data.accountId,
+        paymentMethod: "TRANSFERENCIA",
+        status: "PAGO",
+        notes: data.notes || null,
+      },
+    }),
+  ]);
+
+  revalidatePath("/", "layout");
+}
+
+/**
+ * Aporte: aumenta o investimento e debita a conta de origem. Espelho do
+ * saque — aqui accountId é a origem (o dinheiro sai da conta), sem conta de
+ * destino, já que o "para onde" é o investimento, não outra conta. Diferente
+ * do saque, o valor aportado é novo dinheiro entrando: investedAmount e
+ * currentAmount sobem pelo mesmo valor cheio, sem proporção.
+ */
+export async function contributeInvestment(id: string, raw: z.infer<typeof investmentContributeSchema>) {
+  const user = await requireUser();
+  const data = parseInput(investmentContributeSchema, raw);
+
+  const investment = await prisma.investment.findFirst({ where: { id, userId: user.id } });
+  if (!investment) throw new Error("Investimento não encontrado");
+
+  const account = await prisma.account.findFirst({ where: { id: data.accountId, userId: user.id } });
+  if (!account) throw new Error("Conta inválida");
+
+  await prisma.$transaction([
+    prisma.investment.update({
+      where: { id },
+      data: { currentAmount: round2(investment.currentAmount + data.amount), investedAmount: round2(investment.investedAmount + data.amount) },
+    }),
+    prisma.transaction.create({
+      data: {
+        userId: user.id,
+        type: "TRANSFER",
+        description: `Aporte: ${investment.name}`,
+        amount: data.amount,
+        date: new Date(data.date),
+        accountId: data.accountId,
         paymentMethod: "TRANSFERENCIA",
         status: "PAGO",
         notes: data.notes || null,
