@@ -9,6 +9,7 @@ import { EmptyState } from "@/components/shared/empty-state";
 import { ConfirmationModal } from "@/components/shared/confirmation-modal";
 import { InvestmentModal } from "@/components/investimentos/investment-modal";
 import { WithdrawModal } from "@/components/investimentos/withdraw-modal";
+import { ContributeModal } from "@/components/investimentos/contribute-modal";
 import { TransferInvestmentModal } from "@/components/investimentos/transfer-investment-modal";
 import { PortfolioChart } from "@/components/investimentos/portfolio-chart";
 import { deleteInvestment } from "@/lib/actions/investments";
@@ -16,7 +17,7 @@ import { toast } from "@/hooks/use-toast";
 import { INVESTMENT_CATEGORIES } from "@/lib/constants";
 import { formatCurrency, formatPercent } from "@/lib/format";
 import { round2 } from "@/lib/finance";
-import { TrendingUp, Plus, MoreHorizontal, Pencil, Trash2, ArrowDownToLine, ArrowLeftRight } from "lucide-react";
+import { TrendingUp, Plus, MoreHorizontal, Pencil, Trash2, ArrowDownToLine, ArrowUpFromLine, ArrowLeftRight } from "lucide-react";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 
 export interface InvestmentRow {
@@ -35,6 +36,7 @@ export function InvestmentsList({ investments }: { investments: InvestmentRow[] 
   const [editing, setEditing] = React.useState<InvestmentRow | null>(null);
   const [deletingId, setDeletingId] = React.useState<string | null>(null);
   const [withdrawing, setWithdrawing] = React.useState<InvestmentRow | null>(null);
+  const [contributing, setContributing] = React.useState<InvestmentRow | null>(null);
   const [transferring, setTransferring] = React.useState<InvestmentRow | null>(null);
   const [busy, setBusy] = React.useState(false);
 
@@ -140,7 +142,7 @@ export function InvestmentsList({ investments }: { investments: InvestmentRow[] 
                     const profitPercent = inv.investedAmount > 0 ? round2((profit / inv.investedAmount) * 100) : 0;
                     const portfolioPercent = totalCurrent > 0 ? round2((inv.currentAmount / totalCurrent) * 100) : 0;
                     return (
-                      <TableRow key={inv.id}>
+                      <TableRow key={inv.id} className="cursor-pointer" onClick={() => setContributing(inv)}>
                         <TableCell className="font-medium text-foreground">{inv.name}</TableCell>
                         <TableCell className="text-muted-foreground">{INVESTMENT_CATEGORIES[inv.category as keyof typeof INVESTMENT_CATEGORIES]}</TableCell>
                         <TableCell className="text-right">{formatCurrency(inv.investedAmount)}</TableCell>
@@ -153,14 +155,14 @@ export function InvestmentsList({ investments }: { investments: InvestmentRow[] 
                           </span>
                         </TableCell>
                         <TableCell className="text-right text-muted-foreground">{formatPercent(portfolioPercent)}</TableCell>
-                        <TableCell>
+                        <TableCell onClick={(e) => e.stopPropagation()}>
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                               <Button variant="ghost" size="iconSm">
                                 <MoreHorizontal className="h-4 w-4" />
                               </Button>
                             </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
+                            <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
                               <DropdownMenuItem
                                 onClick={() => {
                                   setEditing(inv);
@@ -168,6 +170,9 @@ export function InvestmentsList({ investments }: { investments: InvestmentRow[] 
                                 }}
                               >
                                 <Pencil className="h-4 w-4" /> Editar
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => setContributing(inv)}>
+                                <ArrowUpFromLine className="h-4 w-4" /> Aportar
                               </DropdownMenuItem>
                               <DropdownMenuItem disabled={inv.currentAmount <= 0} onClick={() => setWithdrawing(inv)}>
                                 <ArrowDownToLine className="h-4 w-4" /> Sacar
@@ -200,6 +205,15 @@ export function InvestmentsList({ investments }: { investments: InvestmentRow[] 
           investmentId={withdrawing.id}
           investmentName={withdrawing.name}
           currentAmount={withdrawing.currentAmount}
+        />
+      )}
+      {contributing && (
+        <ContributeModal
+          open={!!contributing}
+          onOpenChange={(o) => !o && setContributing(null)}
+          investmentId={contributing.id}
+          investmentName={contributing.name}
+          currentAmount={contributing.currentAmount}
         />
       )}
       {transferring && (
