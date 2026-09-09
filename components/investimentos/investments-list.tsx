@@ -59,6 +59,8 @@ export function InvestmentsList({ investments }: { investments: InvestmentRow[] 
       await deleteInvestment(deletingId);
       toast({ title: "Investimento excluído", variant: "success" });
       refresh("Excluindo investimento...");
+    } catch (err) {
+      toast({ title: err instanceof Error ? err.message : "Não foi possível excluir o investimento", variant: "destructive" });
     } finally {
       setBusy(false);
       setDeletingId(null);

@@ -40,6 +40,8 @@ export function BudgetList({ budgets, month, categories }: { budgets: BudgetRow[
       await deleteBudget(deletingId);
       toast({ title: "Orçamento removido", variant: "success" });
       refresh("Removendo orçamento...");
+    } catch (err) {
+      toast({ title: err instanceof Error ? err.message : "Erro ao excluir", variant: "destructive" });
     } finally {
       setBusy(false);
       setDeletingId(null);

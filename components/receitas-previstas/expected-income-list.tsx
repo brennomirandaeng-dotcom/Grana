@@ -40,6 +40,8 @@ export function ExpectedIncomeList({ expectedIncomes, hasFilters }: { expectedIn
       await deleteExpectedIncome(deletingId);
       toast({ title: "Receita prevista excluída", variant: "success" });
       refresh("Excluindo receita prevista...");
+    } catch (err) {
+      toast({ title: err instanceof Error ? err.message : "Não foi possível excluir a receita prevista", variant: "destructive" });
     } finally {
       setBusy(false);
       setDeletingId(null);
