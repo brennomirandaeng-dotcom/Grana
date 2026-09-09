@@ -7,9 +7,9 @@ import { Button } from "@/components/ui/button";
 import { ConfirmationModal } from "@/components/shared/confirmation-modal";
 import { formatDate } from "@/lib/format";
 import { USER_ROLES } from "@/lib/constants";
-import { setUserActive } from "@/lib/actions/admin";
+import { setUserActive, resetUserTransactions } from "@/lib/actions/admin";
 import { toast } from "@/hooks/use-toast";
-import { UserX, UserCheck } from "lucide-react";
+import { UserX, UserCheck, Eraser } from "lucide-react";
 
 interface AdminUser {
   id: string;
@@ -18,12 +18,28 @@ interface AdminUser {
   role: string;
   active: boolean;
   createdAt: Date;
+  transactionCount: number;
 }
 
 export function AdminUsersTable({ users, currentUserId }: { users: AdminUser[]; currentUserId: string }) {
   const { refresh } = useActionRefresh();
   const [deactivatingId, setDeactivatingId] = React.useState<string | null>(null);
+  const [resettingId, setResettingId] = React.useState<string | null>(null);
   const [busyId, setBusyId] = React.useState<string | null>(null);
+
+  async function applyReset(userId: string) {
+    setBusyId(userId);
+    try {
+      await resetUserTransactions(userId);
+      toast({ title: "Lançamentos removidos", variant: "success" });
+      refresh("Zerando lançamentos...");
+    } catch (err) {
+      toast({ title: err instanceof Error ? err.message : "Não foi possível remover os lançamentos", variant: "destructive" });
+    } finally {
+      setBusyId(null);
+      setResettingId(null);
+    }
+  }
 
   async function applyActive(userId: string, active: boolean) {
     setBusyId(userId);
@@ -40,6 +56,7 @@ export function AdminUsersTable({ users, currentUserId }: { users: AdminUser[]; 
   }
 
   const deactivatingUser = users.find((u) => u.id === deactivatingId);
+  const resettingUser = users.find((u) => u.id === resettingId);
 
   return (
     <>
@@ -52,6 +69,7 @@ export function AdminUsersTable({ users, currentUserId }: { users: AdminUser[]; 
               <TableHead>Cadastrado em</TableHead>
               <TableHead>Papel</TableHead>
               <TableHead>Status</TableHead>
+              <TableHead className="text-right">Lançamentos</TableHead>
               <TableHead className="text-right">Ação</TableHead>
             </TableRow>
           </TableHeader>
@@ -73,22 +91,34 @@ export function AdminUsersTable({ users, currentUserId }: { users: AdminUser[]; 
                   <TableCell>
                     <Badge variant={u.active ? "positive" : "negative"}>{u.active ? "Ativo" : "Desativado"}</Badge>
                   </TableCell>
+                  <TableCell className="text-right text-muted-foreground">{u.transactionCount}</TableCell>
                   <TableCell className="text-right">
-                    {u.active ? (
+                    <div className="flex justify-end gap-2">
                       <Button
                         type="button"
                         variant="outline"
                         size="sm"
-                        disabled={isSelf || busyId === u.id}
-                        onClick={() => setDeactivatingId(u.id)}
+                        disabled={u.transactionCount === 0 || busyId === u.id}
+                        onClick={() => setResettingId(u.id)}
                       >
-                        <UserX className="h-4 w-4" /> Cortar acesso
+                        <Eraser className="h-4 w-4" /> Zerar lançamentos
                       </Button>
-                    ) : (
-                      <Button type="button" variant="outline" size="sm" disabled={busyId === u.id} onClick={() => applyActive(u.id, true)}>
-                        <UserCheck className="h-4 w-4" /> Reativar
-                      </Button>
-                    )}
+                      {u.active ? (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          disabled={isSelf || busyId === u.id}
+                          onClick={() => setDeactivatingId(u.id)}
+                        >
+                          <UserX className="h-4 w-4" /> Cortar acesso
+                        </Button>
+                      ) : (
+                        <Button type="button" variant="outline" size="sm" disabled={busyId === u.id} onClick={() => applyActive(u.id, true)}>
+                          <UserCheck className="h-4 w-4" /> Reativar
+                        </Button>
+                      )}
+                    </div>
                   </TableCell>
                 </TableRow>
               );
@@ -110,6 +140,21 @@ export function AdminUsersTable({ users, currentUserId }: { users: AdminUser[]; 
         confirmLabel="Cortar acesso"
         loadingLabel="Cortando acesso..."
         loading={busyId === deactivatingId}
+      />
+
+      <ConfirmationModal
+        open={!!resettingId}
+        onOpenChange={(o) => !o && setResettingId(null)}
+        title="Zerar os lançamentos deste usuário?"
+        description={
+          resettingUser
+            ? `Todos os ${resettingUser.transactionCount} lançamento(s) de ${resettingUser.name} (${resettingUser.email}) serão excluídos permanentemente, junto com compras parceladas, recorrências e pagamentos de fatura ligados a eles. Contas, cartões, categorias, metas e investimentos continuam intactos. Essa ação não pode ser desfeita.`
+            : undefined
+        }
+        onConfirm={() => resettingId && applyReset(resettingId)}
+        confirmLabel="Zerar lançamentos"
+        loadingLabel="Zerando lançamentos..."
+        loading={busyId === resettingId}
       />
     </>
   );
