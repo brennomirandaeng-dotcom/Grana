@@ -1,7 +1,15 @@
 import { requireUser } from "@/lib/session";
 import { getPeriodRange, type PeriodKey } from "@/lib/queries/period";
-import { getPeriodSummary, getMonthlySeries, getExpensesByCategory } from "@/lib/queries/dashboard";
-import { getExpensesByAccount, getExpensesByCard, getTopExpenses, getRecurringExpensesSummary } from "@/lib/queries/reports";
+import { getPeriodSummary, getMonthlySeries, getExpensesByCategory, getIncomeByCategory } from "@/lib/queries/dashboard";
+import {
+  getExpensesByAccount,
+  getExpensesByCard,
+  getTopExpenses,
+  getRecurringExpensesSummary,
+  getIncomeByAccount,
+  getTopIncomes,
+  getRecurringIncomeSummary,
+} from "@/lib/queries/reports";
 import { formatCurrency, formatDate } from "@/lib/format";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { PeriodSelector } from "@/components/dashboard/period-selector";
@@ -17,7 +25,7 @@ export default async function RelatoriosPage({ searchParams }: { searchParams: P
   const period = (periodParam as PeriodKey) ?? "6m";
   const range = getPeriodRange(period);
 
-  const [summary, monthlySeries, categoryData, byAccount, byCard, topExpenses, recurring] = await Promise.all([
+  const [summary, monthlySeries, categoryData, byAccount, byCard, topExpenses, recurring, incomeCategoryData, incomeByAccount, topIncomes, recurringIncome] = await Promise.all([
     getPeriodSummary(user.id, range),
     getMonthlySeries(user.id, 8),
     getExpensesByCategory(user.id, range),
@@ -25,6 +33,10 @@ export default async function RelatoriosPage({ searchParams }: { searchParams: P
     getExpensesByCard(user.id, range),
     getTopExpenses(user.id, range, 10),
     getRecurringExpensesSummary(user.id),
+    getIncomeByCategory(user.id, range),
+    getIncomeByAccount(user.id, range),
+    getTopIncomes(user.id, range, 10),
+    getRecurringIncomeSummary(user.id),
   ]);
 
   return (
@@ -88,6 +100,101 @@ export default async function RelatoriosPage({ searchParams }: { searchParams: P
           </div>
         </CardContent>
       </Card>
+
+      <h2 className="text-lg font-semibold text-foreground">Receitas</h2>
+
+      <div className="grid xl:grid-cols-2 gap-4">
+        <Card>
+          <CardHeader>
+            <CardTitle>Receitas por categoria</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <CategoryBreakdown
+              categories={incomeCategoryData.categories}
+              previousTotals={{}}
+              kind="INCOME"
+              emptyTitle="Nenhuma receita no período"
+              emptyDescription="Registre receitas para ver a distribuição por categoria."
+            />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Receitas por conta</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {incomeByAccount.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Nenhuma receita no período.</p>
+            ) : (
+              incomeByAccount.map((a) => (
+                <div key={a.name} className="flex justify-between text-sm">
+                  <span className="text-foreground">{a.name}</span>
+                  <span className="font-medium text-positive">{formatCurrency(a.total)}</span>
+                </div>
+              ))
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      <Card>
+        <CardHeader className="flex-row items-center justify-between space-y-0">
+          <CardTitle>Maiores receitas do período</CardTitle>
+          <ExportCsvButton
+            filename={`maiores-receitas-${period}.csv`}
+            headers={["Data", "Descrição", "Categoria", "Valor"]}
+            rows={topIncomes.map((t) => [formatDate(t.date), t.description, t.category?.name ?? "—", t.amount.toFixed(2).replace(".", ",")])}
+          />
+        </CardHeader>
+        <CardContent>
+          {topIncomes.length === 0 ? (
+            <EmptyState icon={TrophyIcon} title="Nenhuma receita no período" className="border-none py-8" />
+          ) : (
+            <div className="space-y-1">
+              {topIncomes.map((t, i) => (
+                <div key={t.id} className="flex items-center justify-between rounded-lg px-2 py-2 hover:bg-surface-muted">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <span className="text-xs font-medium text-muted-foreground w-5">{i + 1}º</span>
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-foreground truncate">{t.description}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {formatDate(t.date)} · {t.category?.name ?? "Sem categoria"}
+                      </p>
+                    </div>
+                  </div>
+                  <span className="font-semibold text-positive shrink-0">{formatCurrency(t.amount)}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Receitas recorrentes ativas</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {recurringIncome.length === 0 ? (
+            <EmptyState icon={Repeat} title="Nenhuma receita recorrente cadastrada" className="border-none py-8" />
+          ) : (
+            <div className="space-y-1">
+              {recurringIncome.map((r) => (
+                <div key={r.id} className="flex items-center justify-between rounded-lg px-2 py-2 hover:bg-surface-muted">
+                  <div>
+                    <p className="text-sm font-medium text-foreground">{r.description}</p>
+                    <p className="text-xs text-muted-foreground">{r.category?.name ?? "Sem categoria"}</p>
+                  </div>
+                  <span className="font-semibold text-positive">{formatCurrency(r.amount)}/mês</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <h2 className="text-lg font-semibold text-foreground">Despesas</h2>
 
       <div className="grid xl:grid-cols-2 gap-4">
         <Card>

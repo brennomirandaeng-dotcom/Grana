@@ -83,17 +83,17 @@ export async function getMonthlySeries(userId: string, months = 8, expenseAllSta
   return series;
 }
 
-export async function getExpensesByCategory(userId: string, range: Range, allStatuses = false) {
+async function getTransactionsByCategory(userId: string, type: "INCOME" | "EXPENSE", range: Range, allStatuses = false) {
   const transactions = await prisma.transaction.findMany({
-    where: { userId, type: "EXPENSE", isInvoicePayment: false, ...(allStatuses ? {} : { status: "PAGO" }), date: { gte: range.from, lte: range.to } },
+    where: { userId, type, isInvoicePayment: false, ...(allStatuses ? {} : { status: "PAGO" }), date: { gte: range.from, lte: range.to } },
     include: { category: true },
   });
 
   const map = new Map<string, { id: string; name: string; color: string; total: number; count: number }>();
-  let totalExpense = 0;
+  let totalAmount = 0;
 
   for (const t of transactions) {
-    totalExpense += t.amount;
+    totalAmount += t.amount;
     const key = t.category?.id ?? "sem-categoria";
     const name = t.category?.name ?? "Sem categoria";
     const color = t.category?.color ?? "#94a3b8";
@@ -105,9 +105,17 @@ export async function getExpensesByCategory(userId: string, range: Range, allSta
 
   const categories = Array.from(map.values())
     .sort((a, b) => b.total - a.total)
-    .map((c) => ({ ...c, percent: totalExpense > 0 ? round2((c.total / totalExpense) * 100) : 0 }));
+    .map((c) => ({ ...c, percent: totalAmount > 0 ? round2((c.total / totalAmount) * 100) : 0 }));
 
-  return { categories, totalExpense: round2(totalExpense) };
+  return { categories, totalExpense: round2(totalAmount) };
+}
+
+export async function getExpensesByCategory(userId: string, range: Range, allStatuses = false) {
+  return getTransactionsByCategory(userId, "EXPENSE", range, allStatuses);
+}
+
+export async function getIncomeByCategory(userId: string, range: Range, allStatuses = false) {
+  return getTransactionsByCategory(userId, "INCOME", range, allStatuses);
 }
 
 export async function getUpcomingItems(userId: string, days = 14) {

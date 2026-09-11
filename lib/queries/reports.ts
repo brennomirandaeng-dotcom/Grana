@@ -47,3 +47,38 @@ export async function getRecurringExpensesSummary(userId: string) {
   });
   return recurring;
 }
+
+export async function getIncomeByAccount(userId: string, range: Range) {
+  const rows = await prisma.transaction.findMany({
+    where: { userId, type: "INCOME", isInvoicePayment: false, status: "PAGO", date: { gte: range.from, lte: range.to } },
+    include: { account: true },
+  });
+
+  const map = new Map<string, { name: string; total: number }>();
+  for (const t of rows) {
+    const key = t.account?.id ?? "outros";
+    const name = t.account?.name ?? "Outros";
+    const entry = map.get(key) ?? { name, total: 0 };
+    entry.total = round2(entry.total + t.amount);
+    map.set(key, entry);
+  }
+  return Array.from(map.values()).sort((a, b) => b.total - a.total);
+}
+
+export async function getTopIncomes(userId: string, range: Range, limit = 10) {
+  return prisma.transaction.findMany({
+    where: { userId, type: "INCOME", isInvoicePayment: false, status: "PAGO", date: { gte: range.from, lte: range.to } },
+    include: { category: true, account: true },
+    orderBy: { amount: "desc" },
+    take: limit,
+  });
+}
+
+export async function getRecurringIncomeSummary(userId: string) {
+  const recurring = await prisma.recurringTransaction.findMany({
+    where: { userId, active: true, type: "INCOME" },
+    include: { category: true, account: true },
+    orderBy: { amount: "desc" },
+  });
+  return recurring;
+}

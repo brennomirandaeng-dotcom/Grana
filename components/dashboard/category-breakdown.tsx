@@ -19,19 +19,33 @@ export interface CategorySlice {
 export function CategoryBreakdown({
   categories,
   previousTotals,
+  kind = "EXPENSE",
+  emptyTitle,
+  emptyDescription,
 }: {
   categories: CategorySlice[];
   previousTotals: Record<string, number>;
+  /** Para receitas, subir é bom (verde) e cair é ruim (vermelho) — o oposto de despesas. */
+  kind?: "EXPENSE" | "INCOME";
+  emptyTitle?: string;
+  emptyDescription?: string;
 }) {
   const [selected, setSelected] = React.useState<string | null>(null);
 
   if (categories.length === 0) {
-    return <EmptyState icon={PieIcon} title="Nenhuma despesa no período" description="Registre despesas para ver a distribuição por categoria." />;
+    return (
+      <EmptyState
+        icon={PieIcon}
+        title={emptyTitle ?? "Nenhuma despesa no período"}
+        description={emptyDescription ?? "Registre despesas para ver a distribuição por categoria."}
+      />
+    );
   }
 
   const active = categories.find((c) => c.id === selected) ?? categories[0];
   const prevValue = previousTotals[active.id] ?? 0;
   const change = percentChange(active.total, prevValue);
+  const changeIsGood = change !== null && (kind === "INCOME" ? change >= 0 : change <= 0);
 
   return (
     <div className="grid sm:grid-cols-[minmax(0,220px)_1fr] gap-6 items-center">
@@ -82,7 +96,7 @@ export function CategoryBreakdown({
             </div>
           </div>
           {change !== null && (
-            <p className={cn("mt-2 text-xs font-medium", change <= 0 ? "text-positive" : "text-negative")}>
+            <p className={cn("mt-2 text-xs font-medium", changeIsGood ? "text-positive" : "text-negative")}>
               {change >= 0 ? "+" : ""}
               {change.toFixed(0)}% em relação ao período anterior
             </p>
