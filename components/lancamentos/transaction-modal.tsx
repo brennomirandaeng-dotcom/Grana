@@ -11,6 +11,7 @@ import { Switch } from "@/components/ui/switch";
 import { CurrencyInput } from "@/components/shared/currency-input";
 import { PAYMENT_METHODS, RECURRENCE_FREQUENCIES, type PaymentMethod, type TransactionStatus, type RecurrenceFrequency } from "@/lib/constants";
 import { createTransaction, updateTransaction, deleteTransaction } from "@/lib/actions/transactions";
+import { callAction } from "@/lib/action-result";
 import { toast } from "@/hooks/use-toast";
 import { playCashRegisterSound } from "@/lib/sound";
 import type { TransactionWithRelations } from "@/lib/queries/transactions";
@@ -176,10 +177,10 @@ export function TransactionModal({ open, onOpenChange, defaultType, editing }: T
       };
 
       if (editing) {
-        await updateTransaction(editing.id, payload);
+        await callAction(updateTransaction(editing.id, payload));
         toast({ title: "Lançamento atualizado", variant: "success" });
       } else {
-        await createTransaction(payload);
+        await callAction(createTransaction(payload));
         toast({ title: "Lançamento criado", variant: "success" });
         if (type === "INCOME") playCashRegisterSound();
       }
@@ -196,7 +197,7 @@ export function TransactionModal({ open, onOpenChange, defaultType, editing }: T
     if (!editing) return;
     setSaving(true);
     try {
-      await deleteTransaction(editing.id);
+      await callAction(deleteTransaction(editing.id));
       toast({ title: "Lançamento excluído", variant: "success" });
       setConfirmDeleteOpen(false);
       onOpenChange(false);

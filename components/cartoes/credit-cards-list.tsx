@@ -11,6 +11,7 @@ import { ConfirmationModal } from "@/components/shared/confirmation-modal";
 import { CreditCardModal } from "@/components/cartoes/credit-card-modal";
 import { InstallmentPurchaseModal } from "@/components/cartoes/installment-purchase-modal";
 import { archiveCreditCard, deleteCreditCard, recalculateInvoiceMonths, syncPaidInvoiceStatuses } from "@/lib/actions/credit-cards";
+import { callAction } from "@/lib/action-result";
 import { LinkBusyBridge } from "@/components/shared/link-busy-bridge";
 import { toast } from "@/hooks/use-toast";
 import { CreditCard as CardIcon, Plus, ShoppingCart, MoreHorizontal, Pencil, Archive, ArchiveRestore, Trash2 } from "lucide-react";
@@ -61,7 +62,7 @@ export function CreditCardsList({ cards, categories }: { cards: CardRow[]; categ
   async function handleArchive(id: string, archived: boolean) {
     setBusy(true);
     try {
-      await archiveCreditCard(id, archived);
+      await callAction(archiveCreditCard(id, archived));
       toast({ title: archived ? "Cartão arquivado" : "Cartão reativado", variant: "success" });
       refresh("Atualizando cartão...");
     } finally {
@@ -73,7 +74,7 @@ export function CreditCardsList({ cards, categories }: { cards: CardRow[]; categ
     if (!deletingId) return;
     setBusy(true);
     try {
-      await deleteCreditCard(deletingId);
+      await callAction(deleteCreditCard(deletingId));
       toast({ title: "Cartão excluído", variant: "success" });
       refresh("Excluindo cartão...");
     } catch (err) {

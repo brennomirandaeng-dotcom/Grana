@@ -9,6 +9,7 @@ import { ConfirmationModal } from "@/components/shared/confirmation-modal";
 import { ExpectedIncomeModal } from "@/components/receitas-previstas/expected-income-modal";
 import { ConfirmIncomeModal } from "@/components/receitas-previstas/confirm-income-modal";
 import { deleteExpectedIncome } from "@/lib/actions/expected-income";
+import { callAction } from "@/lib/action-result";
 import { toast } from "@/hooks/use-toast";
 import { formatCurrency, formatDate } from "@/lib/format";
 import { Coins, Plus, MoreHorizontal, Pencil, Trash2, CheckCircle2, Clock } from "lucide-react";
@@ -37,7 +38,7 @@ export function ExpectedIncomeList({ expectedIncomes, hasFilters }: { expectedIn
     if (!deletingId) return;
     setBusy(true);
     try {
-      await deleteExpectedIncome(deletingId);
+      await callAction(deleteExpectedIncome(deletingId));
       toast({ title: "Receita prevista excluída", variant: "success" });
       refresh("Excluindo receita prevista...");
     } catch (err) {

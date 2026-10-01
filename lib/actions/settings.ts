@@ -10,10 +10,15 @@ import { z } from "zod";
 const profileSchema = z.object({ name: z.string().min(2, "Informe seu nome") });
 
 export async function updateProfile(raw: z.infer<typeof profileSchema>) {
-  const user = await requireUser();
-  const data = parseInput(profileSchema, raw);
-  await prisma.user.update({ where: { id: user.id }, data: { name: data.name } });
-  revalidatePath("/", "layout");
+  try {
+    const user = await requireUser();
+    const data = parseInput(profileSchema, raw);
+    await prisma.user.update({ where: { id: user.id }, data: { name: data.name } });
+    revalidatePath("/", "layout");
+  } catch (err) {
+    if (err instanceof Error) return { error: err.message };
+    throw err;
+  }
 }
 
 const preferencesSchema = z.object({
@@ -23,16 +28,26 @@ const preferencesSchema = z.object({
 });
 
 export async function updatePreferences(raw: z.infer<typeof preferencesSchema>) {
-  const user = await requireUser();
-  const data = parseInput(preferencesSchema, raw);
-  await prisma.user.update({ where: { id: user.id }, data });
-  revalidatePath("/", "layout");
+  try {
+    const user = await requireUser();
+    const data = parseInput(preferencesSchema, raw);
+    await prisma.user.update({ where: { id: user.id }, data });
+    revalidatePath("/", "layout");
+  } catch (err) {
+    if (err instanceof Error) return { error: err.message };
+    throw err;
+  }
 }
 
 export async function updateTheme(theme: "light" | "dark" | "auto") {
-  const user = await requireUser();
-  await prisma.user.update({ where: { id: user.id }, data: { theme } });
-  revalidatePath("/", "layout");
+  try {
+    const user = await requireUser();
+    await prisma.user.update({ where: { id: user.id }, data: { theme } });
+    revalidatePath("/", "layout");
+  } catch (err) {
+    if (err instanceof Error) return { error: err.message };
+    throw err;
+  }
 }
 
 const passwordSchema = z.object({
@@ -41,13 +56,18 @@ const passwordSchema = z.object({
 });
 
 export async function changePassword(raw: z.infer<typeof passwordSchema>) {
-  const user = await requireUser();
-  const data = parseInput(passwordSchema, raw);
+  try {
+    const user = await requireUser();
+    const data = parseInput(passwordSchema, raw);
 
-  const dbUser = await prisma.user.findUniqueOrThrow({ where: { id: user.id } });
-  const valid = await bcrypt.compare(data.currentPassword, dbUser.passwordHash);
-  if (!valid) throw new Error("Senha atual incorreta");
+    const dbUser = await prisma.user.findUniqueOrThrow({ where: { id: user.id } });
+    const valid = await bcrypt.compare(data.currentPassword, dbUser.passwordHash);
+    if (!valid) throw new Error("Senha atual incorreta");
 
-  const passwordHash = await bcrypt.hash(data.newPassword, 10);
-  await prisma.user.update({ where: { id: user.id }, data: { passwordHash } });
+    const passwordHash = await bcrypt.hash(data.newPassword, 10);
+    await prisma.user.update({ where: { id: user.id }, data: { passwordHash } });
+  } catch (err) {
+    if (err instanceof Error) return { error: err.message };
+    throw err;
+  }
 }

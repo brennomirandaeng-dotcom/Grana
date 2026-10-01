@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CurrencyInput } from "@/components/shared/currency-input";
 import { addGoalContribution } from "@/lib/actions/goals";
+import { callAction } from "@/lib/action-result";
 import { toast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 
@@ -33,7 +34,7 @@ export function ContributionModal({ open, onOpenChange, goalId, goalName }: { op
     setSaving(true);
     setError(null);
     try {
-      await addGoalContribution(goalId, { amount, type, note: note || null });
+      await callAction(addGoalContribution(goalId, { amount, type, note: note || null }));
       toast({ title: type === "DEPOSIT" ? "Depósito adicionado" : "Retirada registrada", variant: "success" });
       onOpenChange(false);
       refresh("Registrando movimento...");

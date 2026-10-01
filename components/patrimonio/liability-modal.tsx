@@ -9,6 +9,7 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@
 import { CurrencyInput } from "@/components/shared/currency-input";
 import { LIABILITY_TYPES, type LiabilityType } from "@/lib/constants";
 import { createLiability, updateLiability } from "@/lib/actions/net-worth";
+import { callAction } from "@/lib/action-result";
 import { toast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 
@@ -81,10 +82,10 @@ export function LiabilityModal({ open, onOpenChange, liability }: LiabilityModal
         dueDate: dueDate || null,
       };
       if (liability) {
-        await updateLiability(liability.id, payload);
+        await callAction(updateLiability(liability.id, payload));
         toast({ title: "Dívida atualizada", variant: "success" });
       } else {
-        await createLiability(payload);
+        await callAction(createLiability(payload));
         toast({ title: "Dívida adicionada", variant: "success" });
       }
       onOpenChange(false);

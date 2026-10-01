@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { CurrencyInput } from "@/components/shared/currency-input";
 import { createCreditCard, updateCreditCard } from "@/lib/actions/credit-cards";
+import { callAction } from "@/lib/action-result";
 import { toast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 
@@ -59,10 +60,10 @@ export function CreditCardModal({ open, onOpenChange, card }: CardModalProps) {
     try {
       const payload = { name, bank, limitAmount, closingDay: Number(closingDay), dueDay: Number(dueDay), brand, color };
       if (card) {
-        await updateCreditCard(card.id, payload);
+        await callAction(updateCreditCard(card.id, payload));
         toast({ title: "Cartão atualizado", variant: "success" });
       } else {
-        await createCreditCard(payload);
+        await callAction(createCreditCard(payload));
         toast({ title: "Cartão criado", variant: "success" });
       }
       onOpenChange(false);

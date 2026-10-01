@@ -9,6 +9,7 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@
 import { CurrencyInput } from "@/components/shared/currency-input";
 import { ASSET_TYPES, type AssetType } from "@/lib/constants";
 import { createAsset, updateAsset } from "@/lib/actions/net-worth";
+import { callAction } from "@/lib/action-result";
 import { toast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 
@@ -41,10 +42,10 @@ export function AssetModal({ open, onOpenChange, asset }: { open: boolean; onOpe
     try {
       const payload = { name, type: type as AssetType, value };
       if (asset) {
-        await updateAsset(asset.id, payload);
+        await callAction(updateAsset(asset.id, payload));
         toast({ title: "Bem atualizado", variant: "success" });
       } else {
-        await createAsset(payload);
+        await callAction(createAsset(payload));
         toast({ title: "Bem adicionado", variant: "success" });
       }
       onOpenChange(false);

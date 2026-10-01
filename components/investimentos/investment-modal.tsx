@@ -9,6 +9,7 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@
 import { CurrencyInput } from "@/components/shared/currency-input";
 import { INVESTMENT_CATEGORIES, type InvestmentCategory } from "@/lib/constants";
 import { createInvestment, updateInvestment } from "@/lib/actions/investments";
+import { callAction } from "@/lib/action-result";
 import { toast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 
@@ -56,10 +57,10 @@ export function InvestmentModal({ open, onOpenChange, investment }: InvestmentMo
     try {
       const payload = { name, category: category as InvestmentCategory, investedAmount, currentAmount, date, notes: notes || null };
       if (investment) {
-        await updateInvestment(investment.id, payload);
+        await callAction(updateInvestment(investment.id, payload));
         toast({ title: "Investimento atualizado", variant: "success" });
       } else {
-        await createInvestment(payload);
+        await callAction(createInvestment(payload));
         toast({ title: "Investimento adicionado", variant: "success" });
       }
       onOpenChange(false);

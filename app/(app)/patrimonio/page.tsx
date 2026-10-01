@@ -2,6 +2,7 @@ import { requireUser } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { getNetWorth } from "@/lib/queries/net-worth";
 import { recordNetWorthSnapshot } from "@/lib/actions/net-worth";
+import { callAction } from "@/lib/action-result";
 import { formatCurrency, formatDate } from "@/lib/format";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { NetWorthView } from "@/components/patrimonio/net-worth-view";
@@ -11,7 +12,7 @@ export default async function PatrimonioPage() {
   const user = await requireUser();
   const netWorth = await getNetWorth(user.id);
 
-  await recordNetWorthSnapshot(user.id, netWorth.netWorth, netWorth.totalAssets, netWorth.totalLiabilities);
+  await callAction(recordNetWorthSnapshot(user.id, netWorth.netWorth, netWorth.totalAssets, netWorth.totalLiabilities));
 
   const [assets, liabilities, snapshots] = await Promise.all([
     prisma.asset.findMany({ where: { userId: user.id }, orderBy: { createdAt: "desc" } }),

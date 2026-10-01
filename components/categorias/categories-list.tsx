@@ -8,6 +8,7 @@ import { EmptyState } from "@/components/shared/empty-state";
 import { ConfirmationModal } from "@/components/shared/confirmation-modal";
 import { CategoryModal } from "@/components/categorias/category-modal";
 import { deleteCategory } from "@/lib/actions/categories";
+import { callAction } from "@/lib/action-result";
 import { toast } from "@/hooks/use-toast";
 import { getCategoryIcon } from "@/lib/icons";
 import { Tags, Plus, MoreHorizontal, Pencil, Trash2, CornerDownRight } from "lucide-react";
@@ -40,7 +41,7 @@ export function CategoriesList({ categories }: { categories: CategoryRow[] }) {
     if (!deletingId) return;
     setBusy(true);
     try {
-      await deleteCategory(deletingId);
+      await callAction(deleteCategory(deletingId));
       toast({ title: "Categoria excluída", variant: "success" });
       refresh("Excluindo categoria...");
     } catch (err) {

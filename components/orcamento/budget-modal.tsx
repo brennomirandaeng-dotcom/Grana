@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { CurrencyInput } from "@/components/shared/currency-input";
 import { upsertBudget } from "@/lib/actions/budgets";
+import { callAction } from "@/lib/action-result";
 import { toast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 
@@ -44,7 +45,7 @@ export function BudgetModal({
     setSaving(true);
     setError(null);
     try {
-      await upsertBudget({ categoryId, month, limit });
+      await callAction(upsertBudget({ categoryId, month, limit }));
       toast({ title: "Orçamento definido", variant: "success" });
       onOpenChange(false);
       refresh("Salvando orçamento...");

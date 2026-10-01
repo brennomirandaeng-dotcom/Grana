@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { updateProfile, updatePreferences, changePassword, updateTheme } from "@/lib/actions/settings";
+import { callAction } from "@/lib/action-result";
 import { useTheme } from "@/components/providers/theme-provider";
 import { toast } from "@/hooks/use-toast";
 import { Loader2, Sun, Moon, Laptop, LogOut } from "lucide-react";
@@ -60,7 +61,7 @@ function ProfileTab({ user }: { user: UserData }) {
     e.preventDefault();
     setSaving(true);
     try {
-      await updateProfile({ name });
+      await callAction(updateProfile({ name }));
       toast({ title: "Perfil atualizado", variant: "success" });
       refresh("Salvando perfil...");
     } catch {
@@ -112,7 +113,7 @@ function PreferencesTab({ user }: { user: UserData }) {
     e.preventDefault();
     setSaving(true);
     try {
-      await updatePreferences({ currency: "BRL", firstDayOfMonth: Number(firstDayOfMonth), dateFormat });
+      await callAction(updatePreferences({ currency: "BRL", firstDayOfMonth: Number(firstDayOfMonth), dateFormat }));
       toast({ title: "Preferências salvas", variant: "success" });
       refresh("Salvando preferências...");
     } catch {
@@ -182,7 +183,7 @@ function AppearanceTab() {
   async function handleSelect(next: "light" | "dark" | "auto") {
     setTheme(next);
     try {
-      await updateTheme(next);
+      await callAction(updateTheme(next));
     } catch {
       // preferência de tema é best-effort; a UI já refletiu a mudança localmente
     }
@@ -229,7 +230,7 @@ function SecurityTab() {
     setSaving(true);
     setError(null);
     try {
-      await changePassword({ currentPassword, newPassword });
+      await callAction(changePassword({ currentPassword, newPassword }));
       toast({ title: "Senha alterada com sucesso", variant: "success" });
       setCurrentPassword("");
       setNewPassword("");

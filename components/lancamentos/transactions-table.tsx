@@ -12,6 +12,7 @@ import { ConfirmationModal } from "@/components/shared/confirmation-modal";
 import { formatDate } from "@/lib/format";
 import { TRANSACTION_STATUSES, PAYMENT_METHODS } from "@/lib/constants";
 import { deleteTransaction } from "@/lib/actions/transactions";
+import { callAction } from "@/lib/action-result";
 import { toast } from "@/hooks/use-toast";
 import { useQuickAdd } from "@/components/providers/quick-add-provider";
 import type { TransactionWithRelations } from "@/lib/queries/transactions";
@@ -58,7 +59,7 @@ export function TransactionsTable({ transactions, hasFilters }: { transactions: 
     if (!deletingId) return;
     setDeleting(true);
     try {
-      await deleteTransaction(deletingId);
+      await callAction(deleteTransaction(deletingId));
       toast({ title: "Lançamento excluído", variant: "success" });
       refresh("Excluindo lançamento...");
     } catch {

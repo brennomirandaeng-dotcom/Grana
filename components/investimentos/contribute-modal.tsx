@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { CurrencyInput } from "@/components/shared/currency-input";
 import { contributeInvestment } from "@/lib/actions/investments";
+import { callAction } from "@/lib/action-result";
 import { toast } from "@/hooks/use-toast";
 import { formatCurrency } from "@/lib/format";
 import { Loader2 } from "lucide-react";
@@ -70,7 +71,7 @@ export function ContributeModal({
     setSaving(true);
     setError(null);
     try {
-      await contributeInvestment(investmentId, { amount, accountId, date, notes: notes || null });
+      await callAction(contributeInvestment(investmentId, { amount, accountId, date, notes: notes || null }));
       toast({ title: "Aporte registrado", variant: "success" });
       onOpenChange(false);
       refresh("Registrando aporte...");

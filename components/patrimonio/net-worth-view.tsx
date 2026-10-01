@@ -8,6 +8,7 @@ import { ConfirmationModal } from "@/components/shared/confirmation-modal";
 import { AssetModal } from "@/components/patrimonio/asset-modal";
 import { LiabilityModal } from "@/components/patrimonio/liability-modal";
 import { deleteAsset, deleteLiability } from "@/lib/actions/net-worth";
+import { callAction } from "@/lib/action-result";
 import { toast } from "@/hooks/use-toast";
 import { formatCurrency, formatDate } from "@/lib/format";
 import { ASSET_TYPES, LIABILITY_TYPES } from "@/lib/constants";
@@ -56,8 +57,8 @@ export function NetWorthView({
     if (!deleting) return;
     setBusy(true);
     try {
-      if (deleting.kind === "asset") await deleteAsset(deleting.id);
-      else await deleteLiability(deleting.id);
+      if (deleting.kind === "asset") await callAction(deleteAsset(deleting.id));
+      else await callAction(deleteLiability(deleting.id));
       toast({ title: "Removido com sucesso", variant: "success" });
       refresh("Removendo item...");
     } catch (err) {

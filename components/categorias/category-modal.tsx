@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { createCategory, updateCategory } from "@/lib/actions/categories";
+import { callAction } from "@/lib/action-result";
 import { toast } from "@/hooks/use-toast";
 import { CATEGORY_ICON_NAMES, getCategoryIcon } from "@/lib/icons";
 import { cn } from "@/lib/utils";
@@ -67,10 +68,10 @@ export function CategoryModal({ open, onOpenChange, category, parentCandidates, 
     try {
       const payload = { name, kind, icon, color, parentId: parentId === "none" ? null : parentId };
       if (category) {
-        await updateCategory(category.id, payload);
+        await callAction(updateCategory(category.id, payload));
         toast({ title: "Categoria atualizada", variant: "success" });
       } else {
-        await createCategory(payload);
+        await callAction(createCategory(payload));
         toast({ title: "Categoria criada", variant: "success" });
       }
       onOpenChange(false);
