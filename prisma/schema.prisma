@@ -123,6 +123,9 @@ model Transaction {
   installmentPurchase   InstallmentPurchase? @relation(fields: [installmentPurchaseId], references: [id], onDelete: Cascade)
   installmentNumber Int?        // parcela atual (1-based)
 
+  isThirdParty    Boolean @default(false) // compra no cartão feita para terceiro, que vai reembolsar
+  thirdPartyName  String?
+
   recurringTransactionId String?
   recurringTransaction   RecurringTransaction? @relation(fields: [recurringTransactionId], references: [id], onDelete: SetNull)
 

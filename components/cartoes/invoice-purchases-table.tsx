@@ -2,6 +2,7 @@
 import * as React from "react";
 import { useActionRefresh } from "@/hooks/use-action-refresh";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ConfirmationModal } from "@/components/shared/confirmation-modal";
 import { formatDate, formatCurrency } from "@/lib/format";
@@ -10,7 +11,7 @@ import { callAction } from "@/lib/action-result";
 import { toast } from "@/hooks/use-toast";
 import { useQuickAdd } from "@/components/providers/quick-add-provider";
 import type { TransactionWithRelations } from "@/lib/queries/transactions";
-import { MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import { MoreHorizontal, Pencil, Trash2, User } from "lucide-react";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 
 export function InvoicePurchasesTable({ purchases }: { purchases: TransactionWithRelations[] }) {
@@ -53,7 +54,16 @@ export function InvoicePurchasesTable({ purchases }: { purchases: TransactionWit
             {purchases.map((p) => (
               <TableRow key={p.id}>
                 <TableCell className="text-muted-foreground">{formatDate(p.date)}</TableCell>
-                <TableCell className="font-medium text-foreground">{p.description}</TableCell>
+                <TableCell className="font-medium text-foreground">
+                  <div className="flex items-center gap-2">
+                    {p.description}
+                    {p.isThirdParty && (
+                      <Badge variant="info" className="shrink-0">
+                        <User className="h-3 w-3" /> {p.thirdPartyName}
+                      </Badge>
+                    )}
+                  </div>
+                </TableCell>
                 <TableCell className="text-muted-foreground">{p.installmentPurchase ? `${p.installmentNumber}/${p.installmentPurchase.installmentsCount}` : "1/1"}</TableCell>
                 <TableCell>
                   {p.category ? (
@@ -106,6 +116,11 @@ export function InvoicePurchasesTable({ purchases }: { purchases: TransactionWit
                 <p className="text-xs text-muted-foreground mt-0.5">
                   {formatDate(p.date)} · {p.category?.name ?? "Sem categoria"}
                 </p>
+                {p.isThirdParty && (
+                  <Badge variant="info" className="mt-1.5">
+                    <User className="h-3 w-3" /> {p.thirdPartyName}
+                  </Badge>
+                )}
               </div>
               <span className="text-sm font-semibold shrink-0 tabular-nums">{formatCurrency(p.amount)}</span>
             </div>

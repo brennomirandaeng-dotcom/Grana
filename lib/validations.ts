@@ -42,6 +42,8 @@ export const transactionSchema = z.object({
     .nullable(),
   isInstallment: z.boolean().optional(),
   installmentsCount: z.number().int().min(2).max(48).optional().nullable(),
+  isThirdParty: z.boolean().optional(),
+  thirdPartyName: z.string().optional().nullable(),
 });
 
 export const accountSchema = z.object({

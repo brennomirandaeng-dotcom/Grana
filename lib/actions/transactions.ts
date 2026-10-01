@@ -54,6 +54,10 @@ export async function createTransaction(raw: TransactionInput) {
       throw new Error("Selecione a conta");
     }
 
+    const isThirdParty = !!creditCardId && !!data.isThirdParty;
+    if (isThirdParty && !data.thirdPartyName?.trim()) throw new Error("Informe o nome da pessoa");
+    const thirdPartyName = isThirdParty ? data.thirdPartyName!.trim() : null;
+
     // Compra parcelada no cartão: divide o valor em N faturas futuras, em vez
     // de lançar um único registro (mutuamente exclusivo com recorrência).
     if (creditCardId && data.isInstallment && data.installmentsCount && data.installmentsCount > 1) {
@@ -90,6 +94,8 @@ export async function createTransaction(raw: TransactionInput) {
               paymentMethod: "CREDITO",
               status: data.status,
               notes: data.notes || null,
+              isThirdParty,
+              thirdPartyName,
             },
           })
         )
@@ -148,6 +154,8 @@ export async function createTransaction(raw: TransactionInput) {
             creditCardId,
             invoiceMonth,
             recurringTransactionId: recurringId,
+            isThirdParty,
+            thirdPartyName,
           },
         })
       )
@@ -190,6 +198,10 @@ export async function updateTransaction(id: string, raw: TransactionInput) {
       throw new Error("Selecione a conta");
     }
 
+    const isThirdParty = !!creditCardId && !!data.isThirdParty;
+    if (isThirdParty && !data.thirdPartyName?.trim()) throw new Error("Informe o nome da pessoa");
+    const thirdPartyName = isThirdParty ? data.thirdPartyName!.trim() : null;
+
     const newDate = new Date(data.date);
 
     await prisma.$transaction(async (tx) => {
@@ -208,6 +220,8 @@ export async function updateTransaction(id: string, raw: TransactionInput) {
           notes: data.notes || null,
           creditCardId,
           invoiceMonth,
+          isThirdParty,
+          thirdPartyName,
         },
       });
 
