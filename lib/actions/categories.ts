@@ -48,6 +48,28 @@ export async function updateCategory(id: string, raw: z.infer<typeof categorySch
   }
 }
 
+/**
+ * Corrige subcategorias cujo "kind" ficou diferente do kind da categoria
+ * pai (bug anterior: o modal de categoria sempre abria na aba "Despesa" ao
+ * criar uma subcategoria, mesmo quando o pai era uma categoria de Receita,
+ * fazendo essas subcategorias aparecerem erradamente ao lançar despesas).
+ * Uma subcategoria sempre deve ter o mesmo kind do pai. Idempotente: só
+ * corrige o que ainda estiver divergente.
+ */
+export async function fixSubcategoryKinds(): Promise<number> {
+  const user = await requireUser();
+  const categories = await prisma.category.findMany({ where: { userId: user.id } });
+  const byId = new Map(categories.map((c) => [c.id, c]));
+
+  const toFix = categories.filter((c) => c.parentId && byId.get(c.parentId) && c.kind !== byId.get(c.parentId)!.kind);
+  if (toFix.length === 0) return 0;
+
+  await prisma.$transaction(toFix.map((c) => prisma.category.update({ where: { id: c.id }, data: { kind: byId.get(c.parentId!)!.kind } })));
+
+  revalidatePath("/", "layout");
+  return toFix.length;
+}
+
 export async function deleteCategory(id: string) {
   try {
     const user = await requireUser();
