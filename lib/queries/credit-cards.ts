@@ -1,9 +1,16 @@
 import { prisma } from "@/lib/prisma";
-import { round2, getInvoiceMonth } from "@/lib/finance";
+import { round2 } from "@/lib/finance";
+import { monthKey } from "@/lib/format";
 import { transactionInclude } from "@/lib/queries/transactions";
 
-export async function getCreditCardsWithUsage(userId: string) {
+/**
+ * `invoiceMonth` opcional seleciona de qual fatura mostrar o "Valor da
+ * fatura" (padrão: mês atual) — totalDebt/available continuam refletindo a
+ * dívida em aberto geral do cartão, independente do mês filtrado.
+ */
+export async function getCreditCardsWithUsage(userId: string, invoiceMonth?: string) {
   const cards = await prisma.creditCard.findMany({ where: { userId }, orderBy: { createdAt: "asc" } });
+  const targetMonth = invoiceMonth ?? monthKey(new Date());
 
   const [purchases, payments, openTransactions] = await Promise.all([
     prisma.transaction.groupBy({ by: ["creditCardId"], where: { userId, creditCardId: { not: null }, isInvoicePayment: false }, _sum: { amount: true } }),
@@ -17,13 +24,11 @@ export async function getCreditCardsWithUsage(userId: string) {
   const purchaseMap = Object.fromEntries(purchases.map((p) => [p.creditCardId as string, p._sum.amount ?? 0]));
   const paymentMap = Object.fromEntries(payments.map((p) => [p.creditCardId, p._sum.amountPaid ?? 0]));
 
-  const now = new Date();
   return cards.map((c) => {
     const totalDebt = round2((purchaseMap[c.id] ?? 0) - (paymentMap[c.id] ?? 0));
-    const currentInvoiceMonth = getInvoiceMonth(now, c.closingDay, c.dueDay);
     const invoiceTotal = round2(
       openTransactions
-        .filter((t) => t.creditCardId === c.id && t.invoiceMonth === currentInvoiceMonth)
+        .filter((t) => t.creditCardId === c.id && t.invoiceMonth === targetMonth)
         .reduce((sum, t) => sum + t.amount, 0)
     );
     return {

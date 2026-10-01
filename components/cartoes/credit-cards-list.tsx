@@ -32,7 +32,7 @@ export interface CardRow {
   available: number;
 }
 
-export function CreditCardsList({ cards, categories }: { cards: CardRow[]; categories: { id: string; name: string }[] }) {
+export function CreditCardsList({ cards, categories, month }: { cards: CardRow[]; categories: { id: string; name: string }[]; month: string }) {
   const { refresh } = useActionRefresh();
   const [modalOpen, setModalOpen] = React.useState(false);
   const [purchaseOpen, setPurchaseOpen] = React.useState(false);
@@ -120,7 +120,7 @@ export function CreditCardsList({ cards, categories }: { cards: CardRow[]; categ
               <Card key={c.id} className={c.archived ? "opacity-60" : ""}>
                 <CardContent className="p-5">
                   <div className="flex items-start justify-between">
-                    <Link href={`/cartoes/${c.id}`} className="flex items-center gap-2.5">
+                    <Link href={`/cartoes/${c.id}?month=${month}`} className="flex items-center gap-2.5">
                       <span className="flex h-9 w-9 items-center justify-center rounded-lg" style={{ background: `${c.color}22`, color: c.color }}>
                         <CardIcon className="h-4 w-4" />
                       </span>
@@ -174,7 +174,7 @@ export function CreditCardsList({ cards, categories }: { cards: CardRow[]; categ
                     Fecha dia {c.closingDay} · Vence dia {c.dueDay}
                   </p>
 
-                  <Link href={`/cartoes/${c.id}`} className="mt-4 block">
+                  <Link href={`/cartoes/${c.id}?month=${month}`} className="mt-4 block">
                     <Button variant="secondary" size="sm" className="w-full">
                       Ver fatura
                     </Button>
