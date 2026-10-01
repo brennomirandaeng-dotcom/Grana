@@ -16,7 +16,7 @@ import { callAction } from "@/lib/action-result";
 import { toast } from "@/hooks/use-toast";
 import { useQuickAdd } from "@/components/providers/quick-add-provider";
 import type { TransactionWithRelations } from "@/lib/queries/transactions";
-import { ArrowUp, ArrowDown, ArrowUpDown, MoreHorizontal, Pencil, Trash2, Receipt, ArrowLeftRight } from "lucide-react";
+import { ArrowUp, ArrowDown, ArrowUpDown, MoreHorizontal, Pencil, Trash2, Receipt, ArrowLeftRight, User } from "lucide-react";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { Button as Btn } from "@/components/ui/button";
 
@@ -133,6 +133,11 @@ export function TransactionsTable({ transactions, hasFilters }: { transactions: 
                         ({t.installmentNumber}/{t.installmentPurchase.installmentsCount})
                       </span>
                     )}
+                    {t.isThirdParty && (
+                      <Badge variant="info" className="shrink-0">
+                        <User className="h-3 w-3" /> {t.thirdPartyName}
+                      </Badge>
+                    )}
                   </div>
                 </TableCell>
                 <TableCell>
@@ -195,8 +200,13 @@ export function TransactionsTable({ transactions, hasFilters }: { transactions: 
               </div>
               <Money value={t.type === "EXPENSE" ? -t.amount : t.amount} showSign={t.type !== "TRANSFER"} colorize={t.type !== "TRANSFER"} className="text-sm font-semibold shrink-0" />
             </div>
-            <div className="flex items-center gap-2 mt-2">
+            <div className="flex items-center gap-2 mt-2 flex-wrap">
               <Badge variant={statusVariant[t.status] ?? "default"}>{TRANSACTION_STATUSES[t.status as keyof typeof TRANSACTION_STATUSES] ?? t.status}</Badge>
+              {t.isThirdParty && (
+                <Badge variant="info">
+                  <User className="h-3 w-3" /> {t.thirdPartyName}
+                </Badge>
+              )}
               <span className="text-xs text-muted-foreground">
                 {t.type === "TRANSFER" ? `${t.account?.name ?? "Investimento"} → ${t.transferToAccount?.name}` : t.account?.name ?? t.creditCard?.name ?? "—"}
               </span>

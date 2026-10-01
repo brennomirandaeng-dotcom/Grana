@@ -72,6 +72,8 @@ export function TransactionModal({ open, onOpenChange, defaultType, editing }: T
   const [occurrences, setOccurrences] = React.useState<string>("");
   const [isInstallment, setIsInstallment] = React.useState(false);
   const [installmentsCount, setInstallmentsCount] = React.useState<string>("2");
+  const [isThirdParty, setIsThirdParty] = React.useState(false);
+  const [thirdPartyName, setThirdPartyName] = React.useState("");
 
   const [saving, setSaving] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
@@ -110,6 +112,8 @@ export function TransactionModal({ open, onOpenChange, defaultType, editing }: T
       setIsRecurring(false);
       setIsInstallment(false);
       setInstallmentsCount("2");
+      setIsThirdParty(editing.isThirdParty);
+      setThirdPartyName(editing.thirdPartyName ?? "");
     } else {
       setType(defaultType);
       setDescription("");
@@ -128,6 +132,8 @@ export function TransactionModal({ open, onOpenChange, defaultType, editing }: T
       setOccurrences("");
       setIsInstallment(false);
       setInstallmentsCount("2");
+      setIsThirdParty(false);
+      setThirdPartyName("");
     }
     setError(null);
   }, [open, editing, defaultType]);
@@ -135,7 +141,11 @@ export function TransactionModal({ open, onOpenChange, defaultType, editing }: T
   const isCreditExpense = type === "EXPENSE" && paymentMethod === "CREDITO";
 
   React.useEffect(() => {
-    if (!isCreditExpense) setIsInstallment(false);
+    if (!isCreditExpense) {
+      setIsInstallment(false);
+      setIsThirdParty(false);
+      setThirdPartyName("");
+    }
   }, [isCreditExpense]);
 
   const filteredCategories = categories.filter((c) => c.kind === (type === "INCOME" ? "INCOME" : "EXPENSE"));
@@ -143,6 +153,7 @@ export function TransactionModal({ open, onOpenChange, defaultType, editing }: T
 
   const missingSource =
     type === "TRANSFER" ? !accountId || !transferToAccountId : paymentMethod === "CREDITO" ? !creditCardId : !accountId;
+  const missingThirdPartyName = isCreditExpense && isThirdParty && !thirdPartyName.trim();
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -150,6 +161,10 @@ export function TransactionModal({ open, onOpenChange, defaultType, editing }: T
 
     if (missingSource) {
       setError(type === "TRANSFER" ? "Selecione as contas de origem e destino" : paymentMethod === "CREDITO" ? "Selecione o cartão" : "Selecione a conta");
+      return;
+    }
+    if (missingThirdPartyName) {
+      setError("Informe o nome da pessoa");
       return;
     }
 
@@ -174,6 +189,8 @@ export function TransactionModal({ open, onOpenChange, defaultType, editing }: T
         creditCardId: paymentMethod === "CREDITO" ? creditCardId : null,
         isInstallment: isCreditExpense && isInstallment,
         installmentsCount: isCreditExpense && isInstallment ? Number(installmentsCount) : null,
+        isThirdParty: isCreditExpense && isThirdParty,
+        thirdPartyName: isCreditExpense && isThirdParty ? thirdPartyName.trim() : null,
       };
 
       if (editing) {
@@ -415,6 +432,28 @@ export function TransactionModal({ open, onOpenChange, defaultType, editing }: T
             </div>
           )}
 
+          {isCreditExpense && (
+            <div className="rounded-lg border border-border p-3 space-y-3">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="third-party" className="mb-0">
+                  Compra de terceiro
+                </Label>
+                <Switch id="third-party" checked={isThirdParty} onCheckedChange={setIsThirdParty} />
+              </div>
+              {isThirdParty && (
+                <div>
+                  <Label className="text-xs">Nome da pessoa</Label>
+                  <Input
+                    required
+                    value={thirdPartyName}
+                    onChange={(e) => setThirdPartyName(e.target.value)}
+                    placeholder="Ex: João"
+                  />
+                </div>
+              )}
+            </div>
+          )}
+
           {!isCreditExpense && type !== "TRANSFER" && !editing && (
             <div className="rounded-lg border border-border p-3 space-y-3">
               <div className="flex items-center justify-between">
@@ -467,7 +506,7 @@ export function TransactionModal({ open, onOpenChange, defaultType, editing }: T
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>
                 Cancelar
               </Button>
-              <Button type="submit" disabled={saving || loadingRefs || missingSource}>
+              <Button type="submit" disabled={saving || loadingRefs || missingSource || missingThirdPartyName}>
                 {saving && <Loader2 className="h-4 w-4 animate-spin" />}
                 {saving ? "Salvando..." : "Salvar"}
               </Button>
