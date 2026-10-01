@@ -58,6 +58,10 @@ export async function createTransaction(raw: TransactionInput) {
     if (isThirdParty && !data.thirdPartyName?.trim()) throw new Error("Informe o nome da pessoa");
     const thirdPartyName = isThirdParty ? data.thirdPartyName!.trim() : null;
 
+    // Compra no cartão nunca nasce "Paga": o status é controlado pelo
+    // pagamento da fatura (ver payInvoice/syncPaidInvoiceStatuses).
+    const status = creditCardId ? "PENDENTE" : data.status;
+
     // Compra parcelada no cartão: divide o valor em N faturas futuras, em vez
     // de lançar um único registro (mutuamente exclusivo com recorrência).
     if (creditCardId && data.isInstallment && data.installmentsCount && data.installmentsCount > 1) {
@@ -92,7 +96,7 @@ export async function createTransaction(raw: TransactionInput) {
               installmentPurchaseId: purchase.id,
               installmentNumber: idx + 1,
               paymentMethod: "CREDITO",
-              status: data.status,
+              status,
               notes: data.notes || null,
               isThirdParty,
               thirdPartyName,
@@ -149,7 +153,7 @@ export async function createTransaction(raw: TransactionInput) {
             accountId: data.type === "TRANSFER" ? data.accountId : accountId,
             transferToAccountId: data.type === "TRANSFER" ? data.transferToAccountId : null,
             paymentMethod: data.paymentMethod,
-            status: data.status,
+            status,
             notes: data.notes || null,
             creditCardId,
             invoiceMonth,
@@ -202,6 +206,11 @@ export async function updateTransaction(id: string, raw: TransactionInput) {
     if (isThirdParty && !data.thirdPartyName?.trim()) throw new Error("Informe o nome da pessoa");
     const thirdPartyName = isThirdParty ? data.thirdPartyName!.trim() : null;
 
+    // Compra no cartão: o status não é editável manualmente, só muda via
+    // pagamento da fatura — preserva o status atual (se já era uma compra no
+    // cartão) ou nasce "Pendente" (se passou a ser uma agora).
+    const status = creditCardId ? (existing.creditCardId ? existing.status : "PENDENTE") : data.status;
+
     const newDate = new Date(data.date);
 
     await prisma.$transaction(async (tx) => {
@@ -216,7 +225,7 @@ export async function updateTransaction(id: string, raw: TransactionInput) {
           accountId: data.type === "TRANSFER" ? data.accountId : accountId,
           transferToAccountId: data.type === "TRANSFER" ? data.transferToAccountId : null,
           paymentMethod: data.paymentMethod,
-          status: data.status,
+          status,
           notes: data.notes || null,
           creditCardId,
           invoiceMonth,

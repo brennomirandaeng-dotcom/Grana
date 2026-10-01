@@ -180,7 +180,7 @@ export function TransactionModal({ open, onOpenChange, defaultType, editing }: T
         accountId: type === "TRANSFER" ? accountId : paymentMethod === "CREDITO" ? null : accountId || null,
         transferToAccountId: type === "TRANSFER" ? transferToAccountId : null,
         paymentMethod: type === "TRANSFER" ? ("TRANSFERENCIA" as const) : (paymentMethod as PaymentMethod),
-        status: status as TransactionStatus,
+        status: (isCreditExpense ? (editing ? editing.status : "PENDENTE") : status) as TransactionStatus,
         notes: notes || null,
         isRecurring: type !== "TRANSFER" && !isCreditExpense && isRecurring,
         recurrence: !isCreditExpense && isRecurring
@@ -386,13 +386,19 @@ export function TransactionModal({ open, onOpenChange, defaultType, editing }: T
             </div>
           )}
 
-          {type !== "TRANSFER" && (
+          {type !== "TRANSFER" && !isCreditExpense && (
             <div className="flex items-center justify-between rounded-lg border border-border p-3">
               <Label htmlFor="paid" className="mb-0">
                 Pago
               </Label>
               <Switch id="paid" checked={status === "PAGO"} onCheckedChange={(checked) => setStatus(checked ? "PAGO" : "PENDENTE")} />
             </div>
+          )}
+
+          {isCreditExpense && (
+            <p className="text-xs text-muted-foreground px-1">
+              O pagamento desta compra é controlado pela fatura do cartão: ela ficará &quot;Pago&quot; quando a fatura for paga, total ou parcialmente.
+            </p>
           )}
 
           <div>
