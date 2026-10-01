@@ -13,6 +13,7 @@ import { ContributeModal } from "@/components/investimentos/contribute-modal";
 import { TransferInvestmentModal } from "@/components/investimentos/transfer-investment-modal";
 import { PortfolioChart } from "@/components/investimentos/portfolio-chart";
 import { deleteInvestment } from "@/lib/actions/investments";
+import { callAction } from "@/lib/action-result";
 import { toast } from "@/hooks/use-toast";
 import { INVESTMENT_CATEGORIES } from "@/lib/constants";
 import { formatCurrency, formatPercent } from "@/lib/format";
@@ -56,7 +57,7 @@ export function InvestmentsList({ investments }: { investments: InvestmentRow[] 
     if (!deletingId) return;
     setBusy(true);
     try {
-      await deleteInvestment(deletingId);
+      await callAction(deleteInvestment(deletingId));
       toast({ title: "Investimento excluído", variant: "success" });
       refresh("Excluindo investimento...");
     } catch (err) {

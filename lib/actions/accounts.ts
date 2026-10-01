@@ -7,71 +7,96 @@ import { accountSchema, transferSchema, parseInput } from "@/lib/validations";
 import { z } from "zod";
 
 export async function createAccount(raw: z.infer<typeof accountSchema>) {
-  const user = await requireUser();
-  const data = parseInput(accountSchema, raw);
-  await prisma.account.create({
-    data: {
-      userId: user.id,
-      name: data.name,
-      institution: data.institution || null,
-      type: data.type,
-      initialBalance: data.initialBalance,
-      color: data.color || "#10b981",
-    },
-  });
-  revalidatePath("/", "layout");
+  try {
+    const user = await requireUser();
+    const data = parseInput(accountSchema, raw);
+    await prisma.account.create({
+      data: {
+        userId: user.id,
+        name: data.name,
+        institution: data.institution || null,
+        type: data.type,
+        initialBalance: data.initialBalance,
+        color: data.color || "#10b981",
+      },
+    });
+    revalidatePath("/", "layout");
+  } catch (err) {
+    if (err instanceof Error) return { error: err.message };
+    throw err;
+  }
 }
 
 export async function updateAccount(id: string, raw: z.infer<typeof accountSchema>) {
-  const user = await requireUser();
-  const data = parseInput(accountSchema, raw);
-  await prisma.account.updateMany({
-    where: { id, userId: user.id },
-    data: {
-      name: data.name,
-      institution: data.institution || null,
-      type: data.type,
-      initialBalance: data.initialBalance,
-      color: data.color || "#10b981",
-    },
-  });
-  revalidatePath("/", "layout");
+  try {
+    const user = await requireUser();
+    const data = parseInput(accountSchema, raw);
+    await prisma.account.updateMany({
+      where: { id, userId: user.id },
+      data: {
+        name: data.name,
+        institution: data.institution || null,
+        type: data.type,
+        initialBalance: data.initialBalance,
+        color: data.color || "#10b981",
+      },
+    });
+    revalidatePath("/", "layout");
+  } catch (err) {
+    if (err instanceof Error) return { error: err.message };
+    throw err;
+  }
 }
 
 export async function archiveAccount(id: string, archived: boolean) {
-  const user = await requireUser();
-  await prisma.account.updateMany({ where: { id, userId: user.id }, data: { archived } });
-  revalidatePath("/", "layout");
+  try {
+    const user = await requireUser();
+    await prisma.account.updateMany({ where: { id, userId: user.id }, data: { archived } });
+    revalidatePath("/", "layout");
+  } catch (err) {
+    if (err instanceof Error) return { error: err.message };
+    throw err;
+  }
 }
 
 export async function deleteAccount(id: string) {
-  const user = await requireUser();
-  const count = await prisma.transaction.count({ where: { userId: user.id, OR: [{ accountId: id }, { transferToAccountId: id }] } });
-  if (count > 0) {
-    throw new Error("Esta conta possui lançamentos vinculados. Arquive-a em vez de excluir.");
+  try {
+    const user = await requireUser();
+    const count = await prisma.transaction.count({ where: { userId: user.id, OR: [{ accountId: id }, { transferToAccountId: id }] } });
+    if (count > 0) {
+      throw new Error("Esta conta possui lançamentos vinculados. Arquive-a em vez de excluir.");
+    }
+    await prisma.account.deleteMany({ where: { id, userId: user.id } });
+    revalidatePath("/", "layout");
+  } catch (err) {
+    if (err instanceof Error) return { error: err.message };
+    throw err;
   }
-  await prisma.account.deleteMany({ where: { id, userId: user.id } });
-  revalidatePath("/", "layout");
 }
 
 export async function createTransfer(raw: z.infer<typeof transferSchema>) {
-  const user = await requireUser();
-  const data = parseInput(transferSchema, raw);
-  if (data.fromAccountId === data.toAccountId) throw new Error("As contas de origem e destino devem ser diferentes");
+  try {
+    const user = await requireUser();
+    const data = parseInput(transferSchema, raw);
+    if (data.fromAccountId === data.toAccountId) throw new Error("As contas de origem e destino devem ser diferentes");
 
-  await prisma.transaction.create({
-    data: {
-      userId: user.id,
-      type: "TRANSFER",
-      description: "Transferência entre contas",
-      amount: data.amount,
-      date: new Date(data.date),
-      accountId: data.fromAccountId,
-      transferToAccountId: data.toAccountId,
-      paymentMethod: "TRANSFERENCIA",
-      status: "PAGO",
-      notes: data.notes || null,
-    },
-  });
-  revalidatePath("/", "layout");
+    await prisma.transaction.create({
+      data: {
+        userId: user.id,
+        type: "TRANSFER",
+        description: "Transferência entre contas",
+        amount: data.amount,
+        date: new Date(data.date),
+        accountId: data.fromAccountId,
+        transferToAccountId: data.toAccountId,
+        paymentMethod: "TRANSFERENCIA",
+        status: "PAGO",
+        notes: data.notes || null,
+      },
+    });
+    revalidatePath("/", "layout");
+  } catch (err) {
+    if (err instanceof Error) return { error: err.message };
+    throw err;
+  }
 }

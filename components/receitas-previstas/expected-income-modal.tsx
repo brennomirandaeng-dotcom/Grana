@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { CurrencyInput } from "@/components/shared/currency-input";
 import { createExpectedIncome, updateExpectedIncome } from "@/lib/actions/expected-income";
+import { callAction } from "@/lib/action-result";
 import { toast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 
@@ -54,10 +55,10 @@ export function ExpectedIncomeModal({ open, onOpenChange, expectedIncome }: Expe
     try {
       const payload = { description, amount, date };
       if (expectedIncome) {
-        await updateExpectedIncome(expectedIncome.id, payload);
+        await callAction(updateExpectedIncome(expectedIncome.id, payload));
         toast({ title: "Receita prevista atualizada", variant: "success" });
       } else {
-        await createExpectedIncome(payload);
+        await callAction(createExpectedIncome(payload));
         toast({ title: "Receita prevista criada", variant: "success" });
       }
       onOpenChange(false);

@@ -10,6 +10,7 @@ import { ConfirmationModal } from "@/components/shared/confirmation-modal";
 import { GoalModal } from "@/components/metas/goal-modal";
 import { ContributionModal } from "@/components/metas/contribution-modal";
 import { deleteGoal, archiveGoal } from "@/lib/actions/goals";
+import { callAction } from "@/lib/action-result";
 import { toast } from "@/hooks/use-toast";
 import { formatCurrency, formatDate } from "@/lib/format";
 import { round2 } from "@/lib/finance";
@@ -42,7 +43,7 @@ export function GoalsList({ goals }: { goals: GoalRow[] }) {
   async function handleArchive(id: string, archived: boolean) {
     setBusy(true);
     try {
-      await archiveGoal(id, archived);
+      await callAction(archiveGoal(id, archived));
       toast({ title: archived ? "Meta arquivada" : "Meta reativada", variant: "success" });
       refresh("Atualizando meta...");
     } finally {
@@ -54,7 +55,7 @@ export function GoalsList({ goals }: { goals: GoalRow[] }) {
     if (!deletingId) return;
     setBusy(true);
     try {
-      await deleteGoal(deletingId);
+      await callAction(deleteGoal(deletingId));
       toast({ title: "Meta excluída", variant: "success" });
       refresh("Excluindo meta...");
     } catch (err) {

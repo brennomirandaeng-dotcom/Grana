@@ -9,6 +9,7 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@
 import { CurrencyInput } from "@/components/shared/currency-input";
 import { ACCOUNT_TYPES, type AccountType } from "@/lib/constants";
 import { createAccount, updateAccount } from "@/lib/actions/accounts";
+import { callAction } from "@/lib/action-result";
 import { toast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 
@@ -55,10 +56,10 @@ export function AccountModal({ open, onOpenChange, account }: AccountModalProps)
     try {
       const payload = { name, institution: institution || null, type: type as AccountType, initialBalance, color };
       if (account) {
-        await updateAccount(account.id, payload);
+        await callAction(updateAccount(account.id, payload));
         toast({ title: "Conta atualizada", variant: "success" });
       } else {
-        await createAccount(payload);
+        await callAction(createAccount(payload));
         toast({ title: "Conta criada", variant: "success" });
       }
       onOpenChange(false);

@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { CurrencyInput } from "@/components/shared/currency-input";
 import { transferInvestment } from "@/lib/actions/investments";
+import { callAction } from "@/lib/action-result";
 import { toast } from "@/hooks/use-toast";
 import { formatCurrency } from "@/lib/format";
 import { Loader2 } from "lucide-react";
@@ -54,7 +55,7 @@ export function TransferInvestmentModal({
     setSaving(true);
     setError(null);
     try {
-      await transferInvestment(investmentId, { amount, toInvestmentId });
+      await callAction(transferInvestment(investmentId, { amount, toInvestmentId }));
       toast({ title: "Transferência registrada", variant: "success" });
       onOpenChange(false);
       refresh("Transferindo investimento...");

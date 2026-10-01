@@ -8,6 +8,7 @@ import { ConfirmationModal } from "@/components/shared/confirmation-modal";
 import { formatDate } from "@/lib/format";
 import { USER_ROLES } from "@/lib/constants";
 import { setUserActive, resetUserTransactions } from "@/lib/actions/admin";
+import { callAction } from "@/lib/action-result";
 import { toast } from "@/hooks/use-toast";
 import { UserX, UserCheck, Eraser } from "lucide-react";
 
@@ -30,7 +31,7 @@ export function AdminUsersTable({ users, currentUserId }: { users: AdminUser[]; 
   async function applyReset(userId: string) {
     setBusyId(userId);
     try {
-      await resetUserTransactions(userId);
+      await callAction(resetUserTransactions(userId));
       toast({ title: "Lançamentos removidos", variant: "success" });
       refresh("Zerando lançamentos...");
     } catch (err) {
@@ -44,7 +45,7 @@ export function AdminUsersTable({ users, currentUserId }: { users: AdminUser[]; 
   async function applyActive(userId: string, active: boolean) {
     setBusyId(userId);
     try {
-      await setUserActive(userId, active);
+      await callAction(setUserActive(userId, active));
       toast({ title: active ? "Acesso reativado" : "Acesso cortado", variant: "success" });
       refresh("Atualizando usuários...");
     } catch (err) {

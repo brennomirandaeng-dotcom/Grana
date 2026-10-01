@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { CurrencyInput } from "@/components/shared/currency-input";
 import { withdrawInvestment } from "@/lib/actions/investments";
+import { callAction } from "@/lib/action-result";
 import { toast } from "@/hooks/use-toast";
 import { formatCurrency } from "@/lib/format";
 import { Loader2 } from "lucide-react";
@@ -61,7 +62,7 @@ export function WithdrawModal({
     setSaving(true);
     setError(null);
     try {
-      await withdrawInvestment(investmentId, { amount, accountId, date, notes: notes || null });
+      await callAction(withdrawInvestment(investmentId, { amount, accountId, date, notes: notes || null }));
       toast({ title: "Resgate registrado", variant: "success" });
       onOpenChange(false);
       refresh("Registrando saque...");

@@ -10,6 +10,7 @@ import { EmptyState } from "@/components/shared/empty-state";
 import { ConfirmationModal } from "@/components/shared/confirmation-modal";
 import { BudgetModal } from "@/components/orcamento/budget-modal";
 import { deleteBudget } from "@/lib/actions/budgets";
+import { callAction } from "@/lib/action-result";
 import { toast } from "@/hooks/use-toast";
 import { getCategoryIcon } from "@/lib/icons";
 import { PieChart, Plus, Trash2 } from "lucide-react";
@@ -37,7 +38,7 @@ export function BudgetList({ budgets, month, categories }: { budgets: BudgetRow[
     if (!deletingId) return;
     setBusy(true);
     try {
-      await deleteBudget(deletingId);
+      await callAction(deleteBudget(deletingId));
       toast({ title: "Orçamento removido", variant: "success" });
       refresh("Removendo orçamento...");
     } catch (err) {

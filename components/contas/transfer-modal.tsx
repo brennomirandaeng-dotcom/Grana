@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { CurrencyInput } from "@/components/shared/currency-input";
 import { createTransfer } from "@/lib/actions/accounts";
+import { callAction } from "@/lib/action-result";
 import { toast } from "@/hooks/use-toast";
 import { Loader2, ArrowRight } from "lucide-react";
 
@@ -42,7 +43,7 @@ export function TransferModal({ open, onOpenChange, accounts }: { open: boolean;
     setSaving(true);
     setError(null);
     try {
-      await createTransfer({ fromAccountId, toAccountId, amount, date, notes: notes || null });
+      await callAction(createTransfer({ fromAccountId, toAccountId, amount, date, notes: notes || null }));
       toast({ title: "Transferência realizada", variant: "success" });
       onOpenChange(false);
       refresh("Transferindo...");

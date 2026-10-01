@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { CurrencyInput } from "@/components/shared/currency-input";
 import { createInstallmentPurchase } from "@/lib/actions/credit-cards";
+import { callAction } from "@/lib/action-result";
 import { toast } from "@/hooks/use-toast";
 import { formatCurrency } from "@/lib/format";
 import { Loader2 } from "lucide-react";
@@ -64,14 +65,14 @@ export function InstallmentPurchaseModal({
     setSaving(true);
     setError(null);
     try {
-      await createInstallmentPurchase({
+      await callAction(createInstallmentPurchase({
         creditCardId,
         description,
         totalAmount,
         installmentsCount: count,
         categoryId: categoryId || null,
         purchaseDate,
-      });
+      }));
       toast({ title: "Compra parcelada registrada", variant: "success" });
       onOpenChange(false);
       refresh("Registrando parcelas...");

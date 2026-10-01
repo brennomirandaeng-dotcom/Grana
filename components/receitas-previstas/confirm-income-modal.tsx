@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { CurrencyInput } from "@/components/shared/currency-input";
 import { confirmExpectedIncome } from "@/lib/actions/expected-income";
+import { callAction } from "@/lib/action-result";
 import { toast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 
@@ -67,7 +68,7 @@ export function ConfirmIncomeModal({
     setSaving(true);
     setError(null);
     try {
-      await confirmExpectedIncome(expectedIncomeId, { accountId, receivedDate, amount });
+      await callAction(confirmExpectedIncome(expectedIncomeId, { accountId, receivedDate, amount }));
       toast({ title: "Receita confirmada", variant: "success" });
       onOpenChange(false);
       refresh("Confirmando receita...");

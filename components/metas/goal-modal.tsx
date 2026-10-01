@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { CurrencyInput } from "@/components/shared/currency-input";
 import { createGoal, updateGoal } from "@/lib/actions/goals";
+import { callAction } from "@/lib/action-result";
 import { toast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 
@@ -53,10 +54,10 @@ export function GoalModal({ open, onOpenChange, goal }: GoalModalProps) {
     try {
       const payload = { name, targetAmount, currentAmount, deadline: deadline || null, color, icon: "Target" };
       if (goal) {
-        await updateGoal(goal.id, payload);
+        await callAction(updateGoal(goal.id, payload));
         toast({ title: "Meta atualizada", variant: "success" });
       } else {
-        await createGoal(payload);
+        await callAction(createGoal(payload));
         toast({ title: "Meta criada", variant: "success" });
       }
       onOpenChange(false);

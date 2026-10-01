@@ -11,6 +11,7 @@ import { AccountModal } from "@/components/contas/account-modal";
 import { TransferModal } from "@/components/contas/transfer-modal";
 import { AccountDetailModal } from "@/components/contas/account-detail-modal";
 import { archiveAccount, deleteAccount } from "@/lib/actions/accounts";
+import { callAction } from "@/lib/action-result";
 import { toast } from "@/hooks/use-toast";
 import { ACCOUNT_TYPES } from "@/lib/constants";
 import { cn } from "@/lib/utils";
@@ -44,7 +45,7 @@ export function AccountsList({ accounts }: { accounts: AccountRow[] }) {
   async function handleArchive(id: string, archived: boolean) {
     setBusy(true);
     try {
-      await archiveAccount(id, archived);
+      await callAction(archiveAccount(id, archived));
       toast({ title: archived ? "Conta arquivada" : "Conta reativada", variant: "success" });
       refresh("Atualizando conta...");
     } finally {
@@ -56,7 +57,7 @@ export function AccountsList({ accounts }: { accounts: AccountRow[] }) {
     if (!deletingId) return;
     setBusy(true);
     try {
-      await deleteAccount(deletingId);
+      await callAction(deleteAccount(deletingId));
       toast({ title: "Conta excluída", variant: "success" });
       refresh("Excluindo conta...");
     } catch (err) {
