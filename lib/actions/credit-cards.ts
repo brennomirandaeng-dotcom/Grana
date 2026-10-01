@@ -115,7 +115,7 @@ export async function createInstallmentPurchase(raw: z.infer<typeof installmentP
             installmentPurchaseId: purchase.id,
             installmentNumber: idx + 1,
             paymentMethod: "CREDITO",
-            status: "PAGO",
+            status: "PENDENTE",
           },
         })
       )
