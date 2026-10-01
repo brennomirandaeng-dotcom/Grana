@@ -45,21 +45,36 @@ export function CategoryModal({ open, onOpenChange, category, parentCandidates, 
     if (!open) return;
     if (category) {
       setName(category.name);
-      setKind(category.kind as "INCOME" | "EXPENSE");
       setIcon(category.icon);
       setColor(category.color);
-      setParentId(category.parentId ?? "none");
+      const parentId = category.parentId ?? "none";
+      setParentId(parentId);
+      // Uma subcategoria sempre tem o mesmo tipo da categoria pai — prevalece
+      // sobre o kind salvo (defensivo contra dados antigos inconsistentes).
+      const parent = parentCandidates.find((c) => c.id === parentId);
+      setKind((parent?.kind as "INCOME" | "EXPENSE") ?? (category.kind as "INCOME" | "EXPENSE"));
     } else {
       setName("");
-      setKind("EXPENSE");
       setIcon("Circle");
       setColor(COLORS[0]);
       setParentId(defaultParentId ?? "none");
+      const parent = parentCandidates.find((c) => c.id === defaultParentId);
+      setKind((parent?.kind as "INCOME" | "EXPENSE") ?? "EXPENSE");
     }
     setError(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, category, defaultParentId]);
 
+  const hasParent = parentId !== "none";
   const availableParents = parentCandidates.filter((c) => c.kind === kind && c.id !== category?.id && !c.parentId);
+
+  function handleParentChange(value: string) {
+    setParentId(value);
+    if (value !== "none") {
+      const parent = parentCandidates.find((c) => c.id === value);
+      if (parent) setKind(parent.kind as "INCOME" | "EXPENSE");
+    }
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -90,12 +105,19 @@ export function CategoryModal({ open, onOpenChange, category, parentCandidates, 
           <DialogTitle>{category ? "Editar categoria" : "Nova categoria"}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <Tabs value={kind} onValueChange={(v) => setKind(v as "INCOME" | "EXPENSE")}>
-            <TabsList className="w-full grid grid-cols-2">
-              <TabsTrigger value="EXPENSE">Despesa</TabsTrigger>
-              <TabsTrigger value="INCOME">Receita</TabsTrigger>
-            </TabsList>
-          </Tabs>
+          <div>
+            <Tabs value={kind} onValueChange={(v) => !hasParent && setKind(v as "INCOME" | "EXPENSE")}>
+              <TabsList className="w-full grid grid-cols-2">
+                <TabsTrigger value="EXPENSE" disabled={hasParent}>
+                  Despesa
+                </TabsTrigger>
+                <TabsTrigger value="INCOME" disabled={hasParent}>
+                  Receita
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
+            {hasParent && <p className="mt-1.5 text-xs text-muted-foreground">Uma subcategoria tem sempre o mesmo tipo da categoria pai.</p>}
+          </div>
 
           <div>
             <Label htmlFor="cat-name">Nome</Label>
@@ -104,7 +126,7 @@ export function CategoryModal({ open, onOpenChange, category, parentCandidates, 
 
           <div>
             <Label>Categoria pai (opcional — cria uma subcategoria)</Label>
-            <Select value={parentId} onValueChange={setParentId}>
+            <Select value={parentId} onValueChange={handleParentChange}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>

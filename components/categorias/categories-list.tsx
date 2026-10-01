@@ -7,7 +7,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ConfirmationModal } from "@/components/shared/confirmation-modal";
 import { CategoryModal } from "@/components/categorias/category-modal";
-import { deleteCategory } from "@/lib/actions/categories";
+import { deleteCategory, fixSubcategoryKinds } from "@/lib/actions/categories";
 import { callAction } from "@/lib/action-result";
 import { toast } from "@/hooks/use-toast";
 import { getCategoryIcon } from "@/lib/icons";
@@ -36,6 +36,19 @@ export function CategoriesList({ categories }: { categories: CategoryRow[] }) {
   const filtered = categories.filter((c) => c.kind === kind);
   const roots = filtered.filter((c) => !c.parentId);
   const childrenOf = (id: string) => filtered.filter((c) => c.parentId === id);
+
+  // Corrige, uma vez, subcategorias criadas com o kind errado (bug anterior
+  // do modal de categoria) — idempotente: não faz nada se já estiver tudo
+  // consistente com o kind da categoria pai.
+  React.useEffect(() => {
+    fixSubcategoryKinds().then((fixedCount) => {
+      if (fixedCount > 0) {
+        toast({ title: `${fixedCount} subcategoria(s) corrigida(s)`, variant: "success" });
+        refresh("Atualizando categorias...");
+      }
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   async function handleDelete() {
     if (!deletingId) return;
