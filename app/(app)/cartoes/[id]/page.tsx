@@ -18,12 +18,12 @@ export default async function CardDetailPage({ params, searchParams }: { params:
   const { id } = await params;
   const { month } = await searchParams;
 
-  const card = await prisma.creditCard.findFirst({ where: { id, userId: user.id } });
+  const card = await prisma.creditCard.findFirst({ where: { id, userId: user.id, workspace: user.workspace } });
   if (!card) notFound();
 
   const invoiceMonth = month ?? getInvoiceMonth(new Date(), card.closingDay, card.dueDay);
-  const { purchases, total, paid, partiallyPaid, amountPaid, remaining } = await getCardInvoice(user.id, id, invoiceMonth);
-  const accounts = await prisma.account.findMany({ where: { userId: user.id, archived: false }, orderBy: { name: "asc" } });
+  const { purchases, total, paid, partiallyPaid, amountPaid, remaining } = await getCardInvoice(user.id, user.workspace, id, invoiceMonth);
+  const accounts = await prisma.account.findMany({ where: { userId: user.id, workspace: user.workspace, archived: false }, orderBy: { name: "asc" } });
 
   const prevMonth = addMonthsToKey(invoiceMonth, -1);
   const nextMonth = addMonthsToKey(invoiceMonth, 1);

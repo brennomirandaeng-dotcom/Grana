@@ -26,17 +26,17 @@ export default async function RelatoriosPage({ searchParams }: { searchParams: P
   const range = getPeriodRange(period);
 
   const [summary, monthlySeries, categoryData, byAccount, byCard, topExpenses, recurring, incomeCategoryData, incomeByAccount, topIncomes, recurringIncome] = await Promise.all([
-    getPeriodSummary(user.id, range),
-    getMonthlySeries(user.id, 8),
-    getExpensesByCategory(user.id, range),
-    getExpensesByAccount(user.id, range),
-    getExpensesByCard(user.id, range),
-    getTopExpenses(user.id, range, 10),
-    getRecurringExpensesSummary(user.id),
-    getIncomeByCategory(user.id, range),
-    getIncomeByAccount(user.id, range),
-    getTopIncomes(user.id, range, 10),
-    getRecurringIncomeSummary(user.id),
+    getPeriodSummary(user.id, user.workspace, range),
+    getMonthlySeries(user.id, user.workspace, 8),
+    getExpensesByCategory(user.id, user.workspace, range),
+    getExpensesByAccount(user.id, user.workspace, range),
+    getExpensesByCard(user.id, user.workspace, range),
+    getTopExpenses(user.id, user.workspace, range, 10),
+    getRecurringExpensesSummary(user.id, user.workspace),
+    getIncomeByCategory(user.id, user.workspace, range),
+    getIncomeByAccount(user.id, user.workspace, range),
+    getTopIncomes(user.id, user.workspace, range, 10),
+    getRecurringIncomeSummary(user.id, user.workspace),
   ]);
 
   return (

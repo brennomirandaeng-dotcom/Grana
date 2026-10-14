@@ -13,6 +13,7 @@ export async function createCategory(raw: z.infer<typeof categorySchema>) {
     await prisma.category.create({
       data: {
         userId: user.id,
+        workspace: user.workspace,
         name: data.name,
         kind: data.kind,
         icon: data.icon || "Circle",
@@ -32,7 +33,7 @@ export async function updateCategory(id: string, raw: z.infer<typeof categorySch
     const user = await requireUser();
     const data = parseInput(categorySchema, raw);
     await prisma.category.updateMany({
-      where: { id, userId: user.id },
+      where: { id, userId: user.id, workspace: user.workspace },
       data: {
         name: data.name,
         kind: data.kind,
@@ -74,12 +75,12 @@ export async function deleteCategory(id: string) {
   try {
     const user = await requireUser();
     const [txCount, childCount] = await Promise.all([
-      prisma.transaction.count({ where: { userId: user.id, categoryId: id } }),
-      prisma.category.count({ where: { userId: user.id, parentId: id } }),
+      prisma.transaction.count({ where: { userId: user.id, workspace: user.workspace, categoryId: id } }),
+      prisma.category.count({ where: { userId: user.id, workspace: user.workspace, parentId: id } }),
     ]);
     if (txCount > 0) throw new Error("Esta categoria possui lançamentos vinculados.");
     if (childCount > 0) throw new Error("Exclua ou mova as subcategorias primeiro.");
-    await prisma.category.deleteMany({ where: { id, userId: user.id } });
+    await prisma.category.deleteMany({ where: { id, userId: user.id, workspace: user.workspace } });
     revalidatePath("/", "layout");
   } catch (err) {
     if (err instanceof Error) return { error: err.message };

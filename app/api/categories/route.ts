@@ -5,7 +5,7 @@ import { requireUser } from "@/lib/session";
 export async function GET() {
   const user = await requireUser();
   const categories = await prisma.category.findMany({
-    where: { userId: user.id },
+    where: { userId: user.id, workspace: user.workspace },
     orderBy: { name: "asc" },
   });
   return NextResponse.json(categories);

@@ -13,8 +13,8 @@ export default async function OrcamentoPage({ searchParams }: { searchParams: Pr
   const month = monthParam ?? monthKey(new Date());
 
   const [budgets, categories] = await Promise.all([
-    getBudgetsWithSpent(user.id, month),
-    prisma.category.findMany({ where: { userId: user.id, kind: "EXPENSE" }, orderBy: { name: "asc" } }),
+    getBudgetsWithSpent(user.id, user.workspace, month),
+    prisma.category.findMany({ where: { userId: user.id, workspace: user.workspace, kind: "EXPENSE" }, orderBy: { name: "asc" } }),
   ]);
 
   const prevMonth = addMonthsToKey(month, -1);

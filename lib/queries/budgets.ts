@@ -1,16 +1,17 @@
 import { prisma } from "@/lib/prisma";
 import { round2 } from "@/lib/finance";
+import type { Workspace } from "@/lib/constants";
 
-export async function getBudgetsWithSpent(userId: string, month: string) {
+export async function getBudgetsWithSpent(userId: string, workspace: Workspace, month: string) {
   const [year, m] = month.split("-").map(Number);
   const from = new Date(year, m - 1, 1);
   const to = new Date(year, m, 0, 23, 59, 59);
 
   const [budgets, spentRows] = await Promise.all([
-    prisma.budget.findMany({ where: { userId, month }, include: { category: true } }),
+    prisma.budget.findMany({ where: { userId, workspace, month }, include: { category: true } }),
     prisma.transaction.groupBy({
       by: ["categoryId"],
-      where: { userId, type: "EXPENSE", isInvoicePayment: false, status: "PAGO", date: { gte: from, lte: to }, categoryId: { not: null } },
+      where: { userId, workspace, type: "EXPENSE", isInvoicePayment: false, status: "PAGO", date: { gte: from, lte: to }, categoryId: { not: null } },
       _sum: { amount: true },
     }),
   ]);

@@ -14,6 +14,7 @@ export async function createGoal(raw: z.infer<typeof goalSchema>) {
     const goal = await prisma.goal.create({
       data: {
         userId: user.id,
+        workspace: user.workspace,
         name: data.name,
         targetAmount: data.targetAmount,
         currentAmount: data.currentAmount ?? 0,
@@ -37,7 +38,7 @@ export async function updateGoal(id: string, raw: z.infer<typeof goalSchema>) {
     const user = await requireUser();
     const data = parseInput(goalSchema, raw);
     await prisma.goal.updateMany({
-      where: { id, userId: user.id },
+      where: { id, userId: user.id, workspace: user.workspace },
       data: { name: data.name, targetAmount: data.targetAmount, deadline: data.deadline ? new Date(data.deadline) : null, color: data.color || "#f59e0b", icon: data.icon || "Target" },
     });
     revalidatePath("/", "layout");
@@ -50,7 +51,7 @@ export async function updateGoal(id: string, raw: z.infer<typeof goalSchema>) {
 export async function archiveGoal(id: string, archived: boolean) {
   try {
     const user = await requireUser();
-    await prisma.goal.updateMany({ where: { id, userId: user.id }, data: { archived } });
+    await prisma.goal.updateMany({ where: { id, userId: user.id, workspace: user.workspace }, data: { archived } });
     revalidatePath("/", "layout");
   } catch (err) {
     if (err instanceof Error) return { error: err.message };
@@ -61,7 +62,7 @@ export async function archiveGoal(id: string, archived: boolean) {
 export async function deleteGoal(id: string) {
   try {
     const user = await requireUser();
-    await prisma.goal.deleteMany({ where: { id, userId: user.id } });
+    await prisma.goal.deleteMany({ where: { id, userId: user.id, workspace: user.workspace } });
     revalidatePath("/", "layout");
   } catch (err) {
     if (err instanceof Error) return { error: err.message };
@@ -73,7 +74,7 @@ export async function addGoalContribution(goalId: string, raw: z.infer<typeof go
   try {
     const user = await requireUser();
     const data = parseInput(goalContributionSchema, raw);
-    const goal = await prisma.goal.findFirst({ where: { id: goalId, userId: user.id } });
+    const goal = await prisma.goal.findFirst({ where: { id: goalId, userId: user.id, workspace: user.workspace } });
     if (!goal) throw new Error("Meta não encontrada");
 
     if (data.type === "WITHDRAW" && data.amount > goal.currentAmount) {

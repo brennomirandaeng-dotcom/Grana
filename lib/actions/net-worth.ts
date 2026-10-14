@@ -4,13 +4,14 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
 import { assetSchema, liabilitySchema, parseInput } from "@/lib/validations";
+import type { Workspace } from "@/lib/constants";
 import { z } from "zod";
 
 export async function createAsset(raw: z.infer<typeof assetSchema>) {
   try {
     const user = await requireUser();
     const data = parseInput(assetSchema, raw);
-    await prisma.asset.create({ data: { userId: user.id, name: data.name, type: data.type, value: data.value } });
+    await prisma.asset.create({ data: { userId: user.id, workspace: user.workspace, name: data.name, type: data.type, value: data.value } });
     revalidatePath("/", "layout");
   } catch (err) {
     if (err instanceof Error) return { error: err.message };
@@ -22,7 +23,7 @@ export async function updateAsset(id: string, raw: z.infer<typeof assetSchema>) 
   try {
     const user = await requireUser();
     const data = parseInput(assetSchema, raw);
-    await prisma.asset.updateMany({ where: { id, userId: user.id }, data: { name: data.name, type: data.type, value: data.value } });
+    await prisma.asset.updateMany({ where: { id, userId: user.id, workspace: user.workspace }, data: { name: data.name, type: data.type, value: data.value } });
     revalidatePath("/", "layout");
   } catch (err) {
     if (err instanceof Error) return { error: err.message };
@@ -33,7 +34,7 @@ export async function updateAsset(id: string, raw: z.infer<typeof assetSchema>) 
 export async function deleteAsset(id: string) {
   try {
     const user = await requireUser();
-    await prisma.asset.deleteMany({ where: { id, userId: user.id } });
+    await prisma.asset.deleteMany({ where: { id, userId: user.id, workspace: user.workspace } });
     revalidatePath("/", "layout");
   } catch (err) {
     if (err instanceof Error) return { error: err.message };
@@ -48,6 +49,7 @@ export async function createLiability(raw: z.infer<typeof liabilitySchema>) {
     await prisma.liability.create({
       data: {
         userId: user.id,
+        workspace: user.workspace,
         name: data.name,
         type: data.type,
         originalAmount: data.originalAmount,
@@ -70,7 +72,7 @@ export async function updateLiability(id: string, raw: z.infer<typeof liabilityS
     const user = await requireUser();
     const data = parseInput(liabilitySchema, raw);
     await prisma.liability.updateMany({
-      where: { id, userId: user.id },
+      where: { id, userId: user.id, workspace: user.workspace },
       data: {
         name: data.name,
         type: data.type,
@@ -92,7 +94,7 @@ export async function updateLiability(id: string, raw: z.infer<typeof liabilityS
 export async function deleteLiability(id: string) {
   try {
     const user = await requireUser();
-    await prisma.liability.deleteMany({ where: { id, userId: user.id } });
+    await prisma.liability.deleteMany({ where: { id, userId: user.id, workspace: user.workspace } });
     revalidatePath("/", "layout");
   } catch (err) {
     if (err instanceof Error) return { error: err.message };
@@ -100,13 +102,13 @@ export async function deleteLiability(id: string) {
   }
 }
 
-export async function recordNetWorthSnapshot(userId: string, netWorth: number, assets: number, liabilities: number) {
+export async function recordNetWorthSnapshot(userId: string, workspace: Workspace, netWorth: number, assets: number, liabilities: number) {
   try {
     const today = new Date();
     const dateKey = new Date(today.getFullYear(), today.getMonth(), today.getDate());
     await prisma.netWorthSnapshot.upsert({
-      where: { userId_date: { userId, date: dateKey } },
-      create: { userId, date: dateKey, assets, liabilities, netWorth },
+      where: { userId_workspace_date: { userId, workspace, date: dateKey } },
+      create: { userId, workspace, date: dateKey, assets, liabilities, netWorth },
       update: { assets, liabilities, netWorth },
     });
   } catch (err) {

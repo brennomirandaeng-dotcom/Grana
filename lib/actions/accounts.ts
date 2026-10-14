@@ -13,6 +13,7 @@ export async function createAccount(raw: z.infer<typeof accountSchema>) {
     await prisma.account.create({
       data: {
         userId: user.id,
+        workspace: user.workspace,
         name: data.name,
         institution: data.institution || null,
         type: data.type,
@@ -32,7 +33,7 @@ export async function updateAccount(id: string, raw: z.infer<typeof accountSchem
     const user = await requireUser();
     const data = parseInput(accountSchema, raw);
     await prisma.account.updateMany({
-      where: { id, userId: user.id },
+      where: { id, userId: user.id, workspace: user.workspace },
       data: {
         name: data.name,
         institution: data.institution || null,
@@ -51,7 +52,7 @@ export async function updateAccount(id: string, raw: z.infer<typeof accountSchem
 export async function archiveAccount(id: string, archived: boolean) {
   try {
     const user = await requireUser();
-    await prisma.account.updateMany({ where: { id, userId: user.id }, data: { archived } });
+    await prisma.account.updateMany({ where: { id, userId: user.id, workspace: user.workspace }, data: { archived } });
     revalidatePath("/", "layout");
   } catch (err) {
     if (err instanceof Error) return { error: err.message };
@@ -62,11 +63,11 @@ export async function archiveAccount(id: string, archived: boolean) {
 export async function deleteAccount(id: string) {
   try {
     const user = await requireUser();
-    const count = await prisma.transaction.count({ where: { userId: user.id, OR: [{ accountId: id }, { transferToAccountId: id }] } });
+    const count = await prisma.transaction.count({ where: { userId: user.id, workspace: user.workspace, OR: [{ accountId: id }, { transferToAccountId: id }] } });
     if (count > 0) {
       throw new Error("Esta conta possui lançamentos vinculados. Arquive-a em vez de excluir.");
     }
-    await prisma.account.deleteMany({ where: { id, userId: user.id } });
+    await prisma.account.deleteMany({ where: { id, userId: user.id, workspace: user.workspace } });
     revalidatePath("/", "layout");
   } catch (err) {
     if (err instanceof Error) return { error: err.message };
@@ -83,6 +84,7 @@ export async function createTransfer(raw: z.infer<typeof transferSchema>) {
     await prisma.transaction.create({
       data: {
         userId: user.id,
+        workspace: user.workspace,
         type: "TRANSFER",
         description: "Transferência entre contas",
         amount: data.amount,

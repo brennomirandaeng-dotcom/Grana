@@ -1,5 +1,21 @@
+import { cookies } from "next/headers";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import type { Workspace } from "@/lib/constants";
+
+export const WORKSPACE_COOKIE = "workspace";
+
+/**
+ * Contexto ativo (Pessoal/Empresarial), lido de um cookie — cada usuário
+ * gerencia as duas finanças no mesmo cadastro, trocando de contexto por um
+ * switcher no header. Tudo que é "dele" (contas, cartões, categorias,
+ * lançamentos, etc.) é filtrado por esse campo além do userId.
+ */
+export async function getActiveWorkspace(): Promise<Workspace> {
+  const store = await cookies();
+  const value = store.get(WORKSPACE_COOKIE)?.value;
+  return value === "EMPRESARIAL" ? "EMPRESARIAL" : "PESSOAL";
+}
 
 // Memoizado em memória (por instância do servidor) só pro lado "true": uma
 // vez que exista um admin, isso nunca deixa de ser verdade na prática, então
@@ -38,7 +54,8 @@ export async function requireUser() {
   });
   if (!user || !user.active) throw new Error("Sua conta foi desativada. Entre em contato com o administrador.");
 
-  return user;
+  const workspace = await getActiveWorkspace();
+  return { ...user, workspace };
 }
 
 /**

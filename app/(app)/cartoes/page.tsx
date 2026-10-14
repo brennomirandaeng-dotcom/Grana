@@ -14,8 +14,8 @@ export default async function CartoesPage({ searchParams }: { searchParams: Prom
   const month = monthParam ?? monthKey(new Date());
 
   const [cards, categories] = await Promise.all([
-    getCreditCardsWithUsage(user.id, month),
-    prisma.category.findMany({ where: { userId: user.id, kind: "EXPENSE" }, orderBy: { name: "asc" } }),
+    getCreditCardsWithUsage(user.id, user.workspace, month),
+    prisma.category.findMany({ where: { userId: user.id, workspace: user.workspace, kind: "EXPENSE" }, orderBy: { name: "asc" } }),
   ]);
 
   const prevMonth = addMonthsToKey(month, -1);

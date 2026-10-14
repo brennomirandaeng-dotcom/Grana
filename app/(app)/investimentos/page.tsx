@@ -4,7 +4,7 @@ import { InvestmentsList } from "@/components/investimentos/investments-list";
 
 export default async function InvestimentosPage() {
   const user = await requireUser();
-  const investments = await prisma.investment.findMany({ where: { userId: user.id }, orderBy: { date: "desc" } });
+  const investments = await prisma.investment.findMany({ where: { userId: user.id, workspace: user.workspace }, orderBy: { date: "desc" } });
 
   return (
     <div className="space-y-6">

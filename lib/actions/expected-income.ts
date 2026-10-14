@@ -13,6 +13,7 @@ export async function createExpectedIncome(raw: z.infer<typeof expectedIncomeSch
     await prisma.expectedIncome.create({
       data: {
         userId: user.id,
+        workspace: user.workspace,
         description: data.description,
         amount: data.amount,
         date: new Date(data.date),
@@ -29,7 +30,7 @@ export async function updateExpectedIncome(id: string, raw: z.infer<typeof expec
   try {
     const user = await requireUser();
     const data = parseInput(expectedIncomeSchema, raw);
-    const existing = await prisma.expectedIncome.findFirst({ where: { id, userId: user.id } });
+    const existing = await prisma.expectedIncome.findFirst({ where: { id, userId: user.id, workspace: user.workspace } });
     if (!existing) throw new Error("Receita prevista não encontrada");
     if (existing.confirmed) throw new Error("Não é possível editar uma receita já confirmada");
 
@@ -47,13 +48,13 @@ export async function updateExpectedIncome(id: string, raw: z.infer<typeof expec
 export async function deleteExpectedIncome(id: string) {
   try {
     const user = await requireUser();
-    const existing = await prisma.expectedIncome.findFirst({ where: { id, userId: user.id } });
+    const existing = await prisma.expectedIncome.findFirst({ where: { id, userId: user.id, workspace: user.workspace } });
     if (!existing) throw new Error("Receita prevista não encontrada");
 
     await prisma.$transaction(async (tx) => {
       await tx.expectedIncome.delete({ where: { id } });
       if (existing.transactionId) {
-        await tx.transaction.deleteMany({ where: { id: existing.transactionId, userId: user.id } });
+        await tx.transaction.deleteMany({ where: { id: existing.transactionId, userId: user.id, workspace: user.workspace } });
       }
     });
     revalidatePath("/", "layout");
@@ -67,11 +68,11 @@ export async function confirmExpectedIncome(id: string, raw: z.infer<typeof conf
   try {
     const user = await requireUser();
     const data = parseInput(confirmExpectedIncomeSchema, raw);
-    const existing = await prisma.expectedIncome.findFirst({ where: { id, userId: user.id } });
+    const existing = await prisma.expectedIncome.findFirst({ where: { id, userId: user.id, workspace: user.workspace } });
     if (!existing) throw new Error("Receita prevista não encontrada");
     if (existing.confirmed) throw new Error("Receita já confirmada");
 
-    const account = await prisma.account.findFirst({ where: { id: data.accountId, userId: user.id } });
+    const account = await prisma.account.findFirst({ where: { id: data.accountId, userId: user.id, workspace: user.workspace } });
     if (!account) throw new Error("Conta inválida");
 
     const receivedDate = new Date(data.receivedDate);
@@ -80,6 +81,7 @@ export async function confirmExpectedIncome(id: string, raw: z.infer<typeof conf
       const transaction = await tx.transaction.create({
         data: {
           userId: user.id,
+          workspace: user.workspace,
           type: "INCOME",
           description: existing.description,
           amount: data.amount,

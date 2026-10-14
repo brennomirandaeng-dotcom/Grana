@@ -2,11 +2,12 @@ import { prisma } from "@/lib/prisma";
 import { round2 } from "@/lib/finance";
 import { monthKey, formatMonthLabel } from "@/lib/format";
 import { type Range, getPreviousRange } from "@/lib/queries/period";
+import type { Workspace } from "@/lib/constants";
 import { subMonths, startOfMonth, endOfMonth } from "date-fns";
 
-async function sumByType(userId: string, type: "INCOME" | "EXPENSE", range: Range, onlyPaid = true) {
+async function sumByType(userId: string, workspace: Workspace, type: "INCOME" | "EXPENSE", range: Range, onlyPaid = true) {
   const result = await prisma.transaction.aggregate({
-    where: { userId, type, isInvoicePayment: false, ...(onlyPaid ? { status: "PAGO" } : {}), date: { gte: range.from, lte: range.to } },
+    where: { userId, workspace, type, isInvoicePayment: false, ...(onlyPaid ? { status: "PAGO" } : {}), date: { gte: range.from, lte: range.to } },
     _sum: { amount: true },
   });
   return round2(result._sum.amount ?? 0);
@@ -18,15 +19,15 @@ async function sumByType(userId: string, type: "INCOME" | "EXPENSE", range: Rang
  * (Pago, Pendente, Agendado) — usado pelo Dashboard, que quer mostrar o
  * total comprometido do período, não só o já efetivamente pago.
  */
-export async function getPeriodSummary(userId: string, range: Range) {
+export async function getPeriodSummary(userId: string, workspace: Workspace, range: Range) {
   const prevRange = getPreviousRange(range);
 
   const [income, expense, expenseAll, prevIncome, prevExpense] = await Promise.all([
-    sumByType(userId, "INCOME", range),
-    sumByType(userId, "EXPENSE", range),
-    sumByType(userId, "EXPENSE", range, false),
-    sumByType(userId, "INCOME", prevRange),
-    sumByType(userId, "EXPENSE", prevRange),
+    sumByType(userId, workspace, "INCOME", range),
+    sumByType(userId, workspace, "EXPENSE", range),
+    sumByType(userId, workspace, "EXPENSE", range, false),
+    sumByType(userId, workspace, "INCOME", prevRange),
+    sumByType(userId, workspace, "EXPENSE", prevRange),
   ]);
 
   return {
@@ -40,7 +41,7 @@ export async function getPeriodSummary(userId: string, range: Range) {
   };
 }
 
-export async function getMonthlySeries(userId: string, months = 8, expenseAllStatuses = false) {
+export async function getMonthlySeries(userId: string, workspace: Workspace, months = 8, expenseAllStatuses = false) {
   const now = new Date();
   const rangeFrom = startOfMonth(subMonths(now, months - 1));
   const rangeTo = endOfMonth(now);
@@ -51,6 +52,7 @@ export async function getMonthlySeries(userId: string, months = 8, expenseAllSta
   const transactions = await prisma.transaction.findMany({
     where: {
       userId,
+      workspace,
       isInvoicePayment: false,
       date: { gte: rangeFrom, lte: rangeTo },
       OR: [
@@ -83,9 +85,9 @@ export async function getMonthlySeries(userId: string, months = 8, expenseAllSta
   return series;
 }
 
-async function getTransactionsByCategory(userId: string, type: "INCOME" | "EXPENSE", range: Range, allStatuses = false) {
+async function getTransactionsByCategory(userId: string, workspace: Workspace, type: "INCOME" | "EXPENSE", range: Range, allStatuses = false) {
   const transactions = await prisma.transaction.findMany({
-    where: { userId, type, isInvoicePayment: false, ...(allStatuses ? {} : { status: "PAGO" }), date: { gte: range.from, lte: range.to } },
+    where: { userId, workspace, type, isInvoicePayment: false, ...(allStatuses ? {} : { status: "PAGO" }), date: { gte: range.from, lte: range.to } },
     include: { category: true },
   });
 
@@ -110,21 +112,21 @@ async function getTransactionsByCategory(userId: string, type: "INCOME" | "EXPEN
   return { categories, totalExpense: round2(totalAmount) };
 }
 
-export async function getExpensesByCategory(userId: string, range: Range, allStatuses = false) {
-  return getTransactionsByCategory(userId, "EXPENSE", range, allStatuses);
+export async function getExpensesByCategory(userId: string, workspace: Workspace, range: Range, allStatuses = false) {
+  return getTransactionsByCategory(userId, workspace, "EXPENSE", range, allStatuses);
 }
 
-export async function getIncomeByCategory(userId: string, range: Range, allStatuses = false) {
-  return getTransactionsByCategory(userId, "INCOME", range, allStatuses);
+export async function getIncomeByCategory(userId: string, workspace: Workspace, range: Range, allStatuses = false) {
+  return getTransactionsByCategory(userId, workspace, "INCOME", range, allStatuses);
 }
 
-export async function getUpcomingItems(userId: string, days = 14) {
+export async function getUpcomingItems(userId: string, workspace: Workspace, days = 14) {
   const from = new Date();
   const to = new Date();
   to.setDate(to.getDate() + days);
 
   return prisma.transaction.findMany({
-    where: { userId, status: { in: ["PENDENTE", "AGENDADO"] }, date: { gte: from, lte: to } },
+    where: { userId, workspace, status: { in: ["PENDENTE", "AGENDADO"] }, date: { gte: from, lte: to } },
     include: { category: true, account: true, creditCard: true, installmentPurchase: true, transferToAccount: true },
     orderBy: { date: "asc" },
     take: 8,
@@ -135,9 +137,9 @@ export async function getUpcomingItems(userId: string, days = 14) {
  * Total de despesas ainda não pagas (Pendente ou Agendado) dentro do
  * período selecionado no Dashboard — mesmo range usado nos demais cards.
  */
-export async function getPendingExpensesTotal(userId: string, range: Range) {
+export async function getPendingExpensesTotal(userId: string, workspace: Workspace, range: Range) {
   const result = await prisma.transaction.aggregate({
-    where: { userId, type: "EXPENSE", isInvoicePayment: false, status: { in: ["PENDENTE", "AGENDADO"] }, date: { gte: range.from, lte: range.to } },
+    where: { userId, workspace, type: "EXPENSE", isInvoicePayment: false, status: { in: ["PENDENTE", "AGENDADO"] }, date: { gte: range.from, lte: range.to } },
     _sum: { amount: true },
   });
   return round2(result._sum.amount ?? 0);

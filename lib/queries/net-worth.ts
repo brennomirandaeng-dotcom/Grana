@@ -2,14 +2,15 @@ import { prisma } from "@/lib/prisma";
 import { round2 } from "@/lib/finance";
 import { getAccountsWithBalance } from "@/lib/queries/accounts";
 import { getTotalCardDebt } from "@/lib/queries/credit-cards";
+import type { Workspace } from "@/lib/constants";
 
-export async function getNetWorth(userId: string) {
+export async function getNetWorth(userId: string, workspace: Workspace) {
   const [accounts, investments, assets, liabilities, cardDebt] = await Promise.all([
-    getAccountsWithBalance(userId),
-    prisma.investment.findMany({ where: { userId } }),
-    prisma.asset.findMany({ where: { userId } }),
-    prisma.liability.findMany({ where: { userId } }),
-    getTotalCardDebt(userId),
+    getAccountsWithBalance(userId, workspace),
+    prisma.investment.findMany({ where: { userId, workspace } }),
+    prisma.asset.findMany({ where: { userId, workspace } }),
+    prisma.liability.findMany({ where: { userId, workspace } }),
+    getTotalCardDebt(userId, workspace),
   ]);
 
   const cashTotal = round2(accounts.reduce((sum, a) => sum + a.balance, 0));

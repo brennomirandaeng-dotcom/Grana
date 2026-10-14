@@ -14,6 +14,7 @@ export async function createInvestment(raw: z.infer<typeof investmentSchema>) {
     await prisma.investment.create({
       data: {
         userId: user.id,
+        workspace: user.workspace,
         name: data.name,
         category: data.category,
         investedAmount: data.investedAmount,
@@ -34,7 +35,7 @@ export async function updateInvestment(id: string, raw: z.infer<typeof investmen
     const user = await requireUser();
     const data = parseInput(investmentSchema, raw);
     await prisma.investment.updateMany({
-      where: { id, userId: user.id },
+      where: { id, userId: user.id, workspace: user.workspace },
       data: {
         name: data.name,
         category: data.category,
@@ -54,7 +55,7 @@ export async function updateInvestment(id: string, raw: z.infer<typeof investmen
 export async function deleteInvestment(id: string) {
   try {
     const user = await requireUser();
-    await prisma.investment.deleteMany({ where: { id, userId: user.id } });
+    await prisma.investment.deleteMany({ where: { id, userId: user.id, workspace: user.workspace } });
     revalidatePath("/", "layout");
   } catch (err) {
     if (err instanceof Error) return { error: err.message };
@@ -73,11 +74,11 @@ export async function withdrawInvestment(id: string, raw: z.infer<typeof investm
     const user = await requireUser();
     const data = parseInput(investmentWithdrawSchema, raw);
 
-    const investment = await prisma.investment.findFirst({ where: { id, userId: user.id } });
+    const investment = await prisma.investment.findFirst({ where: { id, userId: user.id, workspace: user.workspace } });
     if (!investment) throw new Error("Investimento não encontrado");
     if (data.amount > investment.currentAmount) throw new Error("O valor do saque não pode ser maior que o valor atual do investimento");
 
-    const account = await prisma.account.findFirst({ where: { id: data.accountId, userId: user.id } });
+    const account = await prisma.account.findFirst({ where: { id: data.accountId, userId: user.id, workspace: user.workspace } });
     if (!account) throw new Error("Conta inválida");
 
     const newCurrentAmount = round2(investment.currentAmount - data.amount);
@@ -92,6 +93,7 @@ export async function withdrawInvestment(id: string, raw: z.infer<typeof investm
       prisma.transaction.create({
         data: {
           userId: user.id,
+          workspace: user.workspace,
           type: "TRANSFER",
           description: `Resgate: ${investment.name}`,
           amount: data.amount,
@@ -123,10 +125,10 @@ export async function contributeInvestment(id: string, raw: z.infer<typeof inves
     const user = await requireUser();
     const data = parseInput(investmentContributeSchema, raw);
 
-    const investment = await prisma.investment.findFirst({ where: { id, userId: user.id } });
+    const investment = await prisma.investment.findFirst({ where: { id, userId: user.id, workspace: user.workspace } });
     if (!investment) throw new Error("Investimento não encontrado");
 
-    const account = await prisma.account.findFirst({ where: { id: data.accountId, userId: user.id } });
+    const account = await prisma.account.findFirst({ where: { id: data.accountId, userId: user.id, workspace: user.workspace } });
     if (!account) throw new Error("Conta inválida");
 
     await prisma.$transaction([
@@ -137,6 +139,7 @@ export async function contributeInvestment(id: string, raw: z.infer<typeof inves
       prisma.transaction.create({
         data: {
           userId: user.id,
+          workspace: user.workspace,
           type: "TRANSFER",
           description: `Aporte: ${investment.name}`,
           amount: data.amount,
@@ -169,11 +172,11 @@ export async function transferInvestment(id: string, raw: z.infer<typeof investm
 
     if (data.toInvestmentId === id) throw new Error("Selecione um investimento diferente do de origem");
 
-    const from = await prisma.investment.findFirst({ where: { id, userId: user.id } });
+    const from = await prisma.investment.findFirst({ where: { id, userId: user.id, workspace: user.workspace } });
     if (!from) throw new Error("Investimento de origem não encontrado");
     if (data.amount > from.currentAmount) throw new Error("O valor da transferência não pode ser maior que o valor atual do investimento");
 
-    const to = await prisma.investment.findFirst({ where: { id: data.toInvestmentId, userId: user.id } });
+    const to = await prisma.investment.findFirst({ where: { id: data.toInvestmentId, userId: user.id, workspace: user.workspace } });
     if (!to) throw new Error("Investimento de destino inválido");
 
     const newFromCurrentAmount = round2(from.currentAmount - data.amount);

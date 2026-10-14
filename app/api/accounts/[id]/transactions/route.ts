@@ -5,6 +5,6 @@ import { getAccountTransactions } from "@/lib/queries/accounts";
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const user = await requireUser();
   const { id } = await params;
-  const transactions = await getAccountTransactions(user.id, id);
+  const transactions = await getAccountTransactions(user.id, user.workspace, id);
   return NextResponse.json(transactions);
 }
