@@ -1,5 +1,11 @@
 // Constantes e "enums" (SQLite não suporta enum nativo — validamos aqui)
 
+export const WORKSPACES = {
+  PESSOAL: "Pessoal",
+  EMPRESARIAL: "Empresarial",
+} as const;
+export type Workspace = keyof typeof WORKSPACES;
+
 export const ACCOUNT_TYPES = {
   CHECKING: "Conta corrente",
   DIGITAL: "Conta digital",

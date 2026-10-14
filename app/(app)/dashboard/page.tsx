@@ -25,16 +25,16 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
 
   const [accounts, netWorth, summary, monthlySeries, categoryData, prevCategoryData, insights, upcoming, pendingExpensesTotal, investmentsTotal] =
     await Promise.all([
-      getAccountsWithBalance(user.id),
-      getNetWorth(user.id),
-      getPeriodSummary(user.id, range),
-      getMonthlySeries(user.id, 8, true),
-      getExpensesByCategory(user.id, range, true),
-      getExpensesByCategory(user.id, prevRange, true),
-      getInsights(user.id),
-      getUpcomingItems(user.id),
-      getPendingExpensesTotal(user.id, range),
-      prisma.investment.aggregate({ where: { userId: user.id }, _sum: { currentAmount: true } }),
+      getAccountsWithBalance(user.id, user.workspace),
+      getNetWorth(user.id, user.workspace),
+      getPeriodSummary(user.id, user.workspace, range),
+      getMonthlySeries(user.id, user.workspace, 8, true),
+      getExpensesByCategory(user.id, user.workspace, range, true),
+      getExpensesByCategory(user.id, user.workspace, prevRange, true),
+      getInsights(user.id, user.workspace),
+      getUpcomingItems(user.id, user.workspace),
+      getPendingExpensesTotal(user.id, user.workspace, range),
+      prisma.investment.aggregate({ where: { userId: user.id, workspace: user.workspace }, _sum: { currentAmount: true } }),
     ]);
 
   const balance = round2(accounts.reduce((sum, a) => sum + a.balance, 0));

@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
+import type { Workspace } from "@/lib/constants";
 
 export const transactionInclude = {
   category: true,
@@ -29,11 +30,13 @@ export type SortDirection = "asc" | "desc";
 
 export async function getTransactions(
   userId: string,
+  workspace: Workspace,
   filters: TransactionFilters = {},
   sort: { field: TransactionSortField; direction: SortDirection } = { field: "date", direction: "desc" }
 ): Promise<TransactionWithRelations[]> {
   const where: Prisma.TransactionWhereInput = {
     userId,
+    workspace,
     ...(filters.from || filters.to
       ? { date: { ...(filters.from ? { gte: filters.from } : {}), ...(filters.to ? { lte: filters.to } : {}) } }
       : {}),
@@ -70,6 +73,6 @@ export async function getTransactions(
   });
 }
 
-export async function getTransactionById(userId: string, id: string) {
-  return prisma.transaction.findFirst({ where: { id, userId }, include: transactionInclude });
+export async function getTransactionById(userId: string, workspace: Workspace, id: string) {
+  return prisma.transaction.findFirst({ where: { id, userId, workspace }, include: transactionInclude });
 }

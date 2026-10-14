@@ -14,6 +14,7 @@ export async function createCreditCard(raw: z.infer<typeof creditCardSchema>) {
     await prisma.creditCard.create({
       data: {
         userId: user.id,
+        workspace: user.workspace,
         name: data.name,
         bank: data.bank,
         limitAmount: data.limitAmount,
@@ -35,7 +36,7 @@ export async function updateCreditCard(id: string, raw: z.infer<typeof creditCar
     const user = await requireUser();
     const data = parseInput(creditCardSchema, raw);
     await prisma.creditCard.updateMany({
-      where: { id, userId: user.id },
+      where: { id, userId: user.id, workspace: user.workspace },
       data: {
         name: data.name,
         bank: data.bank,
@@ -56,7 +57,7 @@ export async function updateCreditCard(id: string, raw: z.infer<typeof creditCar
 export async function archiveCreditCard(id: string, archived: boolean) {
   try {
     const user = await requireUser();
-    await prisma.creditCard.updateMany({ where: { id, userId: user.id }, data: { archived } });
+    await prisma.creditCard.updateMany({ where: { id, userId: user.id, workspace: user.workspace }, data: { archived } });
     revalidatePath("/", "layout");
   } catch (err) {
     if (err instanceof Error) return { error: err.message };
@@ -67,9 +68,9 @@ export async function archiveCreditCard(id: string, archived: boolean) {
 export async function deleteCreditCard(id: string) {
   try {
     const user = await requireUser();
-    const count = await prisma.transaction.count({ where: { userId: user.id, creditCardId: id } });
+    const count = await prisma.transaction.count({ where: { userId: user.id, workspace: user.workspace, creditCardId: id } });
     if (count > 0) throw new Error("Este cartão possui compras vinculadas. Arquive-o em vez de excluir.");
-    await prisma.creditCard.deleteMany({ where: { id, userId: user.id } });
+    await prisma.creditCard.deleteMany({ where: { id, userId: user.id, workspace: user.workspace } });
     revalidatePath("/", "layout");
   } catch (err) {
     if (err instanceof Error) return { error: err.message };
@@ -81,13 +82,14 @@ export async function createInstallmentPurchase(raw: z.infer<typeof installmentP
   try {
     const user = await requireUser();
     const data = parseInput(installmentPurchaseSchema, raw);
-    const card = await prisma.creditCard.findFirst({ where: { id: data.creditCardId, userId: user.id } });
+    const card = await prisma.creditCard.findFirst({ where: { id: data.creditCardId, userId: user.id, workspace: user.workspace } });
     if (!card) throw new Error("Cartão inválido");
 
     const purchaseDate = new Date(data.purchaseDate);
     const purchase = await prisma.installmentPurchase.create({
       data: {
         userId: user.id,
+        workspace: user.workspace,
         creditCardId: data.creditCardId,
         description: data.description,
         totalAmount: data.totalAmount,
@@ -105,6 +107,7 @@ export async function createInstallmentPurchase(raw: z.infer<typeof installmentP
         prisma.transaction.create({
           data: {
             userId: user.id,
+            workspace: user.workspace,
             type: "EXPENSE",
             description: data.installmentsCount > 1 ? `${data.description} ${idx + 1}/${data.installmentsCount}` : data.description,
             amount,
@@ -137,13 +140,13 @@ export async function createInstallmentPurchase(raw: z.infer<typeof installmentP
  */
 export async function recalculateInvoiceMonths(): Promise<number> {
   const user = await requireUser();
-  const cards = await prisma.creditCard.findMany({ where: { userId: user.id } });
+  const cards = await prisma.creditCard.findMany({ where: { userId: user.id, workspace: user.workspace } });
 
   let fixedCount = 0;
 
   for (const card of cards) {
     const transactions = await prisma.transaction.findMany({
-      where: { userId: user.id, creditCardId: card.id, isInvoicePayment: false },
+      where: { userId: user.id, workspace: user.workspace, creditCardId: card.id, isInvoicePayment: false },
       select: { id: true, date: true, invoiceMonth: true },
     });
 
@@ -155,7 +158,7 @@ export async function recalculateInvoiceMonths(): Promise<number> {
 
     const offset = dueMonthOffset(card.closingDay, card.dueDay);
     const payments = await prisma.invoicePayment.findMany({
-      where: { userId: user.id, creditCardId: card.id },
+      where: { userId: user.id, workspace: user.workspace, creditCardId: card.id },
       select: { id: true, invoiceMonth: true },
     });
     // O deslocamento é sempre positivo aqui — processar do mês mais recente
@@ -187,13 +190,13 @@ export async function recalculateInvoiceMonths(): Promise<number> {
  */
 export async function syncPaidInvoiceStatuses(): Promise<number> {
   const user = await requireUser();
-  const payments = await prisma.invoicePayment.findMany({ where: { userId: user.id } });
+  const payments = await prisma.invoicePayment.findMany({ where: { userId: user.id, workspace: user.workspace } });
 
   let fixedCount = 0;
 
   for (const payment of payments) {
     const { _sum } = await prisma.transaction.aggregate({
-      where: { userId: user.id, creditCardId: payment.creditCardId, invoiceMonth: payment.invoiceMonth, isInvoicePayment: false },
+      where: { userId: user.id, workspace: user.workspace, creditCardId: payment.creditCardId, invoiceMonth: payment.invoiceMonth, isInvoicePayment: false },
       _sum: { amount: true },
     });
     const total = round2(_sum.amount ?? 0);
@@ -202,6 +205,7 @@ export async function syncPaidInvoiceStatuses(): Promise<number> {
     const result = await prisma.transaction.updateMany({
       where: {
         userId: user.id,
+        workspace: user.workspace,
         creditCardId: payment.creditCardId,
         invoiceMonth: payment.invoiceMonth,
         isInvoicePayment: false,
@@ -226,13 +230,13 @@ export async function syncPaidInvoiceStatuses(): Promise<number> {
 export async function payInvoice(creditCardId: string, invoiceMonth: string, accountId: string, amount: number, paidDate: string) {
   try {
     const user = await requireUser();
-    const card = await prisma.creditCard.findFirst({ where: { id: creditCardId, userId: user.id } });
+    const card = await prisma.creditCard.findFirst({ where: { id: creditCardId, userId: user.id, workspace: user.workspace } });
     if (!card) throw new Error("Cartão inválido");
     if (amount <= 0) throw new Error("Informe um valor válido");
 
     const [{ _sum }, existing] = await Promise.all([
       prisma.transaction.aggregate({
-        where: { userId: user.id, creditCardId, invoiceMonth, isInvoicePayment: false },
+        where: { userId: user.id, workspace: user.workspace, creditCardId, invoiceMonth, isInvoicePayment: false },
         _sum: { amount: true },
       }),
       prisma.invoicePayment.findUnique({ where: { creditCardId_invoiceMonth: { creditCardId, invoiceMonth } } }),
@@ -247,12 +251,13 @@ export async function payInvoice(creditCardId: string, invoiceMonth: string, acc
     await prisma.$transaction([
       prisma.invoicePayment.upsert({
         where: { creditCardId_invoiceMonth: { creditCardId, invoiceMonth } },
-        create: { userId: user.id, creditCardId, invoiceMonth, amountPaid: newTotalPaid, paidDate: new Date(paidDate), accountId },
+        create: { userId: user.id, workspace: user.workspace, creditCardId, invoiceMonth, amountPaid: newTotalPaid, paidDate: new Date(paidDate), accountId },
         update: { amountPaid: newTotalPaid, paidDate: new Date(paidDate), accountId },
       }),
       prisma.transaction.create({
         data: {
           userId: user.id,
+          workspace: user.workspace,
           type: "EXPENSE",
           description: fullyPaid ? `Pagamento fatura ${card.name}` : `Pagamento parcial fatura ${card.name}`,
           amount,
@@ -265,7 +270,7 @@ export async function payInvoice(creditCardId: string, invoiceMonth: string, acc
         },
       }),
       ...(fullyPaid
-        ? [prisma.transaction.updateMany({ where: { userId: user.id, creditCardId, invoiceMonth, isInvoicePayment: false }, data: { status: "PAGO" } })]
+        ? [prisma.transaction.updateMany({ where: { userId: user.id, workspace: user.workspace, creditCardId, invoiceMonth, isInvoicePayment: false }, data: { status: "PAGO" } })]
         : []),
     ]);
 

@@ -3,6 +3,7 @@ import { round2 } from "@/lib/finance";
 import { formatCurrency, formatMonthLabel, monthKey } from "@/lib/format";
 import { getPeriodRange, percentChange } from "@/lib/queries/period";
 import { getExpensesByCategory } from "@/lib/queries/dashboard";
+import type { Workspace } from "@/lib/constants";
 
 export interface Insight {
   kind: "economia" | "evolucao" | "atencao" | "meta";
@@ -11,22 +12,22 @@ export interface Insight {
   message: string;
 }
 
-export async function getInsights(userId: string): Promise<Insight[]> {
+export async function getInsights(userId: string, workspace: Workspace): Promise<Insight[]> {
   const insights: Insight[] = [];
   const now = new Date();
   const thisMonth = getPeriodRange("mes", now);
   const lastMonth = getPeriodRange("mes_anterior", now);
 
   const [thisMonthCats, lastMonthCats, goals] = await Promise.all([
-    getExpensesByCategory(userId, thisMonth),
-    getExpensesByCategory(userId, lastMonth),
-    prisma.goal.findMany({ where: { userId, archived: false } }),
+    getExpensesByCategory(userId, workspace, thisMonth),
+    getExpensesByCategory(userId, workspace, lastMonth),
+    prisma.goal.findMany({ where: { userId, workspace, archived: false } }),
   ]);
 
   const [incomeAgg, expenseAgg, prevExpenseAgg] = await Promise.all([
-    prisma.transaction.aggregate({ where: { userId, type: "INCOME", status: "PAGO", isInvoicePayment: false, date: { gte: thisMonth.from, lte: thisMonth.to } }, _sum: { amount: true } }),
-    prisma.transaction.aggregate({ where: { userId, type: "EXPENSE", status: "PAGO", isInvoicePayment: false, date: { gte: thisMonth.from, lte: thisMonth.to } }, _sum: { amount: true } }),
-    prisma.transaction.aggregate({ where: { userId, type: "EXPENSE", status: "PAGO", isInvoicePayment: false, date: { gte: lastMonth.from, lte: lastMonth.to } }, _sum: { amount: true } }),
+    prisma.transaction.aggregate({ where: { userId, workspace, type: "INCOME", status: "PAGO", isInvoicePayment: false, date: { gte: thisMonth.from, lte: thisMonth.to } }, _sum: { amount: true } }),
+    prisma.transaction.aggregate({ where: { userId, workspace, type: "EXPENSE", status: "PAGO", isInvoicePayment: false, date: { gte: thisMonth.from, lte: thisMonth.to } }, _sum: { amount: true } }),
+    prisma.transaction.aggregate({ where: { userId, workspace, type: "EXPENSE", status: "PAGO", isInvoicePayment: false, date: { gte: lastMonth.from, lte: lastMonth.to } }, _sum: { amount: true } }),
   ]);
 
   const income = round2(incomeAgg._sum.amount ?? 0);

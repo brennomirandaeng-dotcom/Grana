@@ -2,21 +2,22 @@ import { prisma } from "@/lib/prisma";
 import { round2 } from "@/lib/finance";
 import { monthKey } from "@/lib/format";
 import { transactionInclude } from "@/lib/queries/transactions";
+import type { Workspace } from "@/lib/constants";
 
 /**
  * `invoiceMonth` opcional seleciona de qual fatura mostrar o "Valor da
  * fatura" (padrão: mês atual) — totalDebt/available continuam refletindo a
  * dívida em aberto geral do cartão, independente do mês filtrado.
  */
-export async function getCreditCardsWithUsage(userId: string, invoiceMonth?: string) {
-  const cards = await prisma.creditCard.findMany({ where: { userId }, orderBy: { createdAt: "asc" } });
+export async function getCreditCardsWithUsage(userId: string, workspace: Workspace, invoiceMonth?: string) {
+  const cards = await prisma.creditCard.findMany({ where: { userId, workspace }, orderBy: { createdAt: "asc" } });
   const targetMonth = invoiceMonth ?? monthKey(new Date());
 
   const [purchases, payments, openTransactions] = await Promise.all([
-    prisma.transaction.groupBy({ by: ["creditCardId"], where: { userId, creditCardId: { not: null }, isInvoicePayment: false }, _sum: { amount: true } }),
-    prisma.invoicePayment.groupBy({ by: ["creditCardId"], where: { userId }, _sum: { amountPaid: true } }),
+    prisma.transaction.groupBy({ by: ["creditCardId"], where: { userId, workspace, creditCardId: { not: null }, isInvoicePayment: false }, _sum: { amount: true } }),
+    prisma.invoicePayment.groupBy({ by: ["creditCardId"], where: { userId, workspace }, _sum: { amountPaid: true } }),
     prisma.transaction.findMany({
-      where: { userId, creditCardId: { not: null }, isInvoicePayment: false },
+      where: { userId, workspace, creditCardId: { not: null }, isInvoicePayment: false },
       select: { creditCardId: true, invoiceMonth: true, amount: true },
     }),
   ]);
@@ -40,10 +41,10 @@ export async function getCreditCardsWithUsage(userId: string, invoiceMonth?: str
   });
 }
 
-export async function getCardInvoice(userId: string, creditCardId: string, invoiceMonth: string) {
+export async function getCardInvoice(userId: string, workspace: Workspace, creditCardId: string, invoiceMonth: string) {
   const [purchases, payment] = await Promise.all([
     prisma.transaction.findMany({
-      where: { userId, creditCardId, invoiceMonth, isInvoicePayment: false },
+      where: { userId, workspace, creditCardId, invoiceMonth, isInvoicePayment: false },
       include: transactionInclude,
       orderBy: { date: "desc" },
     }),
@@ -58,7 +59,7 @@ export async function getCardInvoice(userId: string, creditCardId: string, invoi
   return { purchases, total, payment, paid, partiallyPaid, amountPaid, remaining: round2(total - amountPaid) };
 }
 
-export async function getTotalCardDebt(userId: string) {
-  const cards = await getCreditCardsWithUsage(userId);
+export async function getTotalCardDebt(userId: string, workspace: Workspace) {
+  const cards = await getCreditCardsWithUsage(userId, workspace);
   return round2(cards.reduce((sum, c) => sum + c.totalDebt, 0));
 }

@@ -57,6 +57,7 @@ model Account {
   id          String      @id @default(cuid())
   userId      String
   user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspace   String      @default("PESSOAL") // PESSOAL | EMPRESARIAL
   name        String
   institution String?
   type        String      @default("CHECKING")
@@ -64,6 +65,8 @@ model Account {
   color       String      @default("#10b981")
   archived    Boolean     @default(false)
   createdAt   DateTime    @default(now())
+
+  @@index([userId, workspace])
 
   transactions      Transaction[]
   transfersOut      Transaction[] @relation("TransferFrom")
@@ -78,6 +81,7 @@ model Category {
   id        String       @id @default(cuid())
   userId    String
   user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspace String       @default("PESSOAL") // PESSOAL | EMPRESARIAL
   name      String
   icon      String       @default("Circle")
   color     String       @default("#6366f1")
@@ -91,6 +95,8 @@ model Category {
   budgets      Budget[]
   recurringTransactions RecurringTransaction[]
   installmentPurchases InstallmentPurchase[]
+
+  @@index([userId, workspace])
 }
 
 // ==================== LANÇAMENTOS ====================
@@ -102,6 +108,7 @@ model Transaction {
   id          String            @id @default(cuid())
   userId      String
   user        User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspace   String            @default("PESSOAL") // PESSOAL | EMPRESARIAL
   type        String
   description String
   amount      Float
@@ -137,8 +144,8 @@ model Transaction {
   createdAt   DateTime          @default(now())
   updatedAt   DateTime          @updatedAt
 
-  @@index([userId, date])
-  @@index([userId, type])
+  @@index([userId, workspace, date])
+  @@index([userId, workspace, type])
   @@index([creditCardId, invoiceMonth])
 }
 
@@ -151,6 +158,7 @@ model ExpectedIncome {
   id            String       @id @default(cuid())
   userId        String
   user          User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspace     String       @default("PESSOAL") // PESSOAL | EMPRESARIAL
   description   String
   amount        Float
   date          DateTime     // data prevista de recebimento
@@ -160,7 +168,7 @@ model ExpectedIncome {
   transaction   Transaction? @relation(fields: [transactionId], references: [id], onDelete: SetNull)
   createdAt     DateTime     @default(now())
 
-  @@index([userId, date])
+  @@index([userId, workspace, date])
 }
 
 // ==================== RECORRÊNCIAS ====================
@@ -170,6 +178,7 @@ model RecurringTransaction {
   id          String              @id @default(cuid())
   userId      String
   user        User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspace   String              @default("PESSOAL") // PESSOAL | EMPRESARIAL
   description String
   amount      Float
   type        String
@@ -186,6 +195,8 @@ model RecurringTransaction {
   createdAt   DateTime            @default(now())
 
   transactions Transaction[]
+
+  @@index([userId, workspace])
 }
 
 // ==================== CARTÕES DE CRÉDITO ====================
@@ -194,6 +205,7 @@ model CreditCard {
   id             String   @id @default(cuid())
   userId         String
   user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspace      String   @default("PESSOAL") // PESSOAL | EMPRESARIAL
   name           String
   bank           String
   limitAmount    Float
@@ -207,12 +219,15 @@ model CreditCard {
   transactions        Transaction[]
   installmentPurchases InstallmentPurchase[]
   invoicePayments      InvoicePayment[]
+
+  @@index([userId, workspace])
 }
 
 model InstallmentPurchase {
   id                String   @id @default(cuid())
   userId            String
   user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspace         String   @default("PESSOAL") // PESSOAL | EMPRESARIAL
   creditCardId      String
   creditCard        CreditCard @relation(fields: [creditCardId], references: [id], onDelete: Cascade)
   description       String
@@ -230,6 +245,7 @@ model InvoicePayment {
   id           String     @id @default(cuid())
   userId       String
   user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspace    String     @default("PESSOAL") // PESSOAL | EMPRESARIAL
   creditCardId String
   creditCard   CreditCard @relation(fields: [creditCardId], references: [id], onDelete: Cascade)
   invoiceMonth String     // "YYYY-MM"
@@ -248,6 +264,7 @@ model Budget {
   id         String   @id @default(cuid())
   userId     String
   user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspace  String   @default("PESSOAL") // PESSOAL | EMPRESARIAL
   categoryId String
   category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
   month      String   // "YYYY-MM"
@@ -255,6 +272,7 @@ model Budget {
   createdAt  DateTime @default(now())
 
   @@unique([categoryId, month])
+  @@index([userId, workspace, month])
 }
 
 // ==================== METAS ====================
@@ -263,6 +281,7 @@ model Goal {
   id            String   @id @default(cuid())
   userId        String
   user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspace     String   @default("PESSOAL") // PESSOAL | EMPRESARIAL
   name          String
   targetAmount  Float
   currentAmount Float    @default(0)
@@ -273,6 +292,8 @@ model Goal {
   createdAt     DateTime @default(now())
 
   contributions GoalContribution[]
+
+  @@index([userId, workspace])
 }
 
 // movementType: DEPOSIT | WITHDRAW
@@ -294,6 +315,7 @@ model Investment {
   id             String             @id @default(cuid())
   userId         String
   user           User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspace      String             @default("PESSOAL") // PESSOAL | EMPRESARIAL
   name           String
   category       String             @default("OUTROS")
   investedAmount Float
@@ -301,6 +323,8 @@ model Investment {
   date           DateTime
   notes          String?
   createdAt      DateTime           @default(now())
+
+  @@index([userId, workspace])
 }
 
 // ==================== PATRIMÔNIO ====================
@@ -310,11 +334,14 @@ model Asset {
   id        String    @id @default(cuid())
   userId    String
   user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspace String    @default("PESSOAL") // PESSOAL | EMPRESARIAL
   name      String
   type      String    @default("OUTRO")
   value     Float
   date      DateTime  @default(now())
   createdAt DateTime  @default(now())
+
+  @@index([userId, workspace])
 }
 
 // type: EMPRESTIMO | FINANCIAMENTO | PARCELAMENTO | DIVIDA_PESSOAL
@@ -323,6 +350,7 @@ model Liability {
   id                String        @id @default(cuid())
   userId            String
   user              User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspace         String        @default("PESSOAL") // PESSOAL | EMPRESARIAL
   name              String
   type              String        @default("EMPRESTIMO")
   originalAmount    Float
@@ -332,17 +360,20 @@ model Liability {
   interestRate      Float?
   dueDate           DateTime?
   createdAt         DateTime      @default(now())
+
+  @@index([userId, workspace])
 }
 
 model NetWorthSnapshot {
   id        String   @id @default(cuid())
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspace String   @default("PESSOAL") // PESSOAL | EMPRESARIAL
   date      DateTime
   assets    Float
   liabilities Float
   netWorth  Float
   createdAt DateTime @default(now())
 
-  @@unique([userId, date])
+  @@unique([userId, workspace, date])
 }

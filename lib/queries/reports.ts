@@ -1,10 +1,11 @@
 import { prisma } from "@/lib/prisma";
 import { round2 } from "@/lib/finance";
 import type { Range } from "@/lib/queries/period";
+import type { Workspace } from "@/lib/constants";
 
-export async function getExpensesByAccount(userId: string, range: Range) {
+export async function getExpensesByAccount(userId: string, workspace: Workspace, range: Range) {
   const rows = await prisma.transaction.findMany({
-    where: { userId, type: "EXPENSE", isInvoicePayment: false, status: "PAGO", date: { gte: range.from, lte: range.to } },
+    where: { userId, workspace, type: "EXPENSE", isInvoicePayment: false, status: "PAGO", date: { gte: range.from, lte: range.to } },
     include: { account: true, creditCard: true },
   });
 
@@ -19,38 +20,38 @@ export async function getExpensesByAccount(userId: string, range: Range) {
   return Array.from(map.values()).sort((a, b) => b.total - a.total);
 }
 
-export async function getExpensesByCard(userId: string, range: Range) {
+export async function getExpensesByCard(userId: string, workspace: Workspace, range: Range) {
   const rows = await prisma.transaction.groupBy({
     by: ["creditCardId"],
-    where: { userId, type: "EXPENSE", isInvoicePayment: false, status: "PAGO", creditCardId: { not: null }, date: { gte: range.from, lte: range.to } },
+    where: { userId, workspace, type: "EXPENSE", isInvoicePayment: false, status: "PAGO", creditCardId: { not: null }, date: { gte: range.from, lte: range.to } },
     _sum: { amount: true },
   });
-  const cards = await prisma.creditCard.findMany({ where: { userId } });
+  const cards = await prisma.creditCard.findMany({ where: { userId, workspace } });
   const cardMap = Object.fromEntries(cards.map((c) => [c.id, c.name]));
   return rows.map((r) => ({ name: cardMap[r.creditCardId as string] ?? "—", total: round2(r._sum.amount ?? 0) })).sort((a, b) => b.total - a.total);
 }
 
-export async function getTopExpenses(userId: string, range: Range, limit = 10) {
+export async function getTopExpenses(userId: string, workspace: Workspace, range: Range, limit = 10) {
   return prisma.transaction.findMany({
-    where: { userId, type: "EXPENSE", isInvoicePayment: false, status: "PAGO", date: { gte: range.from, lte: range.to } },
+    where: { userId, workspace, type: "EXPENSE", isInvoicePayment: false, status: "PAGO", date: { gte: range.from, lte: range.to } },
     include: { category: true, account: true, creditCard: true },
     orderBy: { amount: "desc" },
     take: limit,
   });
 }
 
-export async function getRecurringExpensesSummary(userId: string) {
+export async function getRecurringExpensesSummary(userId: string, workspace: Workspace) {
   const recurring = await prisma.recurringTransaction.findMany({
-    where: { userId, active: true, type: "EXPENSE" },
+    where: { userId, workspace, active: true, type: "EXPENSE" },
     include: { category: true, account: true },
     orderBy: { amount: "desc" },
   });
   return recurring;
 }
 
-export async function getIncomeByAccount(userId: string, range: Range) {
+export async function getIncomeByAccount(userId: string, workspace: Workspace, range: Range) {
   const rows = await prisma.transaction.findMany({
-    where: { userId, type: "INCOME", isInvoicePayment: false, status: "PAGO", date: { gte: range.from, lte: range.to } },
+    where: { userId, workspace, type: "INCOME", isInvoicePayment: false, status: "PAGO", date: { gte: range.from, lte: range.to } },
     include: { account: true },
   });
 
@@ -65,18 +66,18 @@ export async function getIncomeByAccount(userId: string, range: Range) {
   return Array.from(map.values()).sort((a, b) => b.total - a.total);
 }
 
-export async function getTopIncomes(userId: string, range: Range, limit = 10) {
+export async function getTopIncomes(userId: string, workspace: Workspace, range: Range, limit = 10) {
   return prisma.transaction.findMany({
-    where: { userId, type: "INCOME", isInvoicePayment: false, status: "PAGO", date: { gte: range.from, lte: range.to } },
+    where: { userId, workspace, type: "INCOME", isInvoicePayment: false, status: "PAGO", date: { gte: range.from, lte: range.to } },
     include: { category: true, account: true },
     orderBy: { amount: "desc" },
     take: limit,
   });
 }
 
-export async function getRecurringIncomeSummary(userId: string) {
+export async function getRecurringIncomeSummary(userId: string, workspace: Workspace) {
   const recurring = await prisma.recurringTransaction.findMany({
-    where: { userId, active: true, type: "INCOME" },
+    where: { userId, workspace, active: true, type: "INCOME" },
     include: { category: true, account: true },
     orderBy: { amount: "desc" },
   });

@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { adminExists } from "@/lib/session";
+import { adminExists, getActiveWorkspace } from "@/lib/session";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Header } from "@/components/layout/header";
 import { MobileBottomNav } from "@/components/layout/mobile-bottom-nav";
@@ -25,13 +25,14 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   // é a única forma de chegar até a tela que faz o bootstrap do primeiro
   // admin (senão o link nunca apareceria pra ninguém poder criá-lo).
   const showAdminLink = isAdmin || !(await adminExists());
+  const workspace = await getActiveWorkspace();
 
   return (
     <QuickAddProvider>
       <div className="flex min-h-screen w-full">
         <Sidebar />
         <div className="flex-1 flex flex-col lg:pl-64 min-w-0">
-          <Header user={user} isAdmin={showAdminLink} />
+          <Header user={user} isAdmin={showAdminLink} workspace={workspace} />
           <main className="flex-1 px-4 py-6 lg:px-8 lg:py-8 pb-24 lg:pb-8 max-w-[1600px] w-full mx-auto">{children}</main>
         </div>
       </div>

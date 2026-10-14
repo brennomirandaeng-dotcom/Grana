@@ -4,7 +4,7 @@ import { AccountsList } from "@/components/contas/accounts-list";
 
 export default async function ContasPage() {
   const user = await requireUser();
-  const [accounts, counts] = await Promise.all([getAccountsWithBalance(user.id), getAccountTransactionCounts(user.id)]);
+  const [accounts, counts] = await Promise.all([getAccountsWithBalance(user.id, user.workspace), getAccountTransactionCounts(user.id, user.workspace)]);
 
   const rows = accounts.map((a) => ({ ...a, transactionCount: counts[a.id] ?? 0 }));
 

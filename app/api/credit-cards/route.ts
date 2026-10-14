@@ -5,7 +5,7 @@ import { requireUser } from "@/lib/session";
 export async function GET() {
   const user = await requireUser();
   const cards = await prisma.creditCard.findMany({
-    where: { userId: user.id, archived: false },
+    where: { userId: user.id, workspace: user.workspace, archived: false },
     orderBy: { createdAt: "asc" },
   });
   return NextResponse.json(cards);

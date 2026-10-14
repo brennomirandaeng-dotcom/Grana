@@ -4,7 +4,7 @@ import { GoalsList } from "@/components/metas/goals-list";
 
 export default async function MetasPage() {
   const user = await requireUser();
-  const goals = await prisma.goal.findMany({ where: { userId: user.id }, orderBy: { createdAt: "asc" } });
+  const goals = await prisma.goal.findMany({ where: { userId: user.id, workspace: user.workspace }, orderBy: { createdAt: "asc" } });
 
   return (
     <div className="space-y-6">

@@ -10,14 +10,14 @@ import { NetWorthChart } from "@/components/patrimonio/net-worth-chart";
 
 export default async function PatrimonioPage() {
   const user = await requireUser();
-  const netWorth = await getNetWorth(user.id);
+  const netWorth = await getNetWorth(user.id, user.workspace);
 
-  await callAction(recordNetWorthSnapshot(user.id, netWorth.netWorth, netWorth.totalAssets, netWorth.totalLiabilities));
+  await callAction(recordNetWorthSnapshot(user.id, user.workspace, netWorth.netWorth, netWorth.totalAssets, netWorth.totalLiabilities));
 
   const [assets, liabilities, snapshots] = await Promise.all([
-    prisma.asset.findMany({ where: { userId: user.id }, orderBy: { createdAt: "desc" } }),
-    prisma.liability.findMany({ where: { userId: user.id }, orderBy: { createdAt: "desc" } }),
-    prisma.netWorthSnapshot.findMany({ where: { userId: user.id }, orderBy: { date: "asc" } }),
+    prisma.asset.findMany({ where: { userId: user.id, workspace: user.workspace }, orderBy: { createdAt: "desc" } }),
+    prisma.liability.findMany({ where: { userId: user.id, workspace: user.workspace }, orderBy: { createdAt: "desc" } }),
+    prisma.netWorthSnapshot.findMany({ where: { userId: user.id, workspace: user.workspace }, orderBy: { date: "asc" } }),
   ]);
 
   const chartData = snapshots.map((s) => ({ label: formatDate(s.date), netWorth: s.netWorth }));

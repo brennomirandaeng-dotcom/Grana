@@ -1,9 +1,11 @@
 "use client";
 import * as React from "react";
 import { useNavigateWithBusy } from "@/hooks/use-navigate-with-busy";
-import { Search, Menu, Sun, Moon, LogOut, Settings, Shield, User as UserIcon } from "lucide-react";
+import { useActionRefresh } from "@/hooks/use-action-refresh";
+import { Search, Menu, Sun, Moon, LogOut, Settings, Shield, User as UserIcon, Building2, Check } from "lucide-react";
 import { signOut } from "next-auth/react";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -13,22 +15,39 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-import { Button } from "@/components/ui/button";
 import { useTheme } from "@/components/providers/theme-provider";
 import { MobileNavDrawer } from "@/components/layout/mobile-nav-drawer";
 import { LinkBusyBridge } from "@/components/shared/link-busy-bridge";
+import { setActiveWorkspace } from "@/lib/actions/workspace";
+import { WORKSPACES, type Workspace } from "@/lib/constants";
 import Link from "next/link";
 
 interface HeaderProps {
   user: { name: string; email: string; image?: string | null };
   isAdmin?: boolean;
+  workspace: Workspace;
 }
 
-export function Header({ user, isAdmin }: HeaderProps) {
+export function Header({ user, isAdmin, workspace }: HeaderProps) {
   const { navigate } = useNavigateWithBusy("Buscando...");
+  const { refresh } = useActionRefresh();
   const { theme, setTheme } = useTheme();
   const [query, setQuery] = React.useState("");
   const [drawerOpen, setDrawerOpen] = React.useState(false);
+  const [switching, setSwitching] = React.useState(false);
+
+  async function handleSwitchWorkspace(next: Workspace) {
+    if (next === workspace || switching) return;
+    setSwitching(true);
+    try {
+      await setActiveWorkspace(next);
+      refresh(next === "EMPRESARIAL" ? "Mudando para Empresarial..." : "Mudando para Pessoal...");
+    } finally {
+      setSwitching(false);
+    }
+  }
+
+  const WorkspaceIcon = workspace === "EMPRESARIAL" ? Building2 : UserIcon;
 
   const initials = user.name
     .split(" ")
@@ -59,6 +78,27 @@ export function Header({ user, isAdmin }: HeaderProps) {
       </form>
 
       <div className="flex-1" />
+
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="outline" size="sm" className="gap-1.5" disabled={switching}>
+            <WorkspaceIcon className="h-4 w-4" />
+            <span className="hidden sm:inline">{WORKSPACES[workspace]}</span>
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuLabel>Contexto financeiro</DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={() => handleSwitchWorkspace("PESSOAL")}>
+            <UserIcon className="h-4 w-4" /> Pessoal
+            {workspace === "PESSOAL" && <Check className="h-4 w-4 ml-auto" />}
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => handleSwitchWorkspace("EMPRESARIAL")}>
+            <Building2 className="h-4 w-4" /> Empresarial
+            {workspace === "EMPRESARIAL" && <Check className="h-4 w-4 ml-auto" />}
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
 
       <button
         onClick={() => setTheme(theme === "dark" ? "light" : "dark")}

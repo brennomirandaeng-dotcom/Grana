@@ -38,7 +38,7 @@ export async function createTransaction(raw: TransactionInput) {
     let accountId: string | null = data.accountId ?? null;
 
     if (data.paymentMethod === "CREDITO" && raw.creditCardId) {
-      const card = await prisma.creditCard.findFirst({ where: { id: raw.creditCardId, userId: user.id } });
+      const card = await prisma.creditCard.findFirst({ where: { id: raw.creditCardId, userId: user.id, workspace: user.workspace } });
       if (!card) throw new Error("Cartão inválido");
       creditCardId = card.id;
       invoiceMonth = getInvoiceMonth(new Date(data.date), card.closingDay, card.dueDay);
@@ -69,6 +69,7 @@ export async function createTransaction(raw: TransactionInput) {
       const purchase = await prisma.installmentPurchase.create({
         data: {
           userId: user.id,
+          workspace: user.workspace,
           creditCardId,
           description: data.description,
           totalAmount: data.amount,
@@ -86,6 +87,7 @@ export async function createTransaction(raw: TransactionInput) {
           prisma.transaction.create({
             data: {
               userId: user.id,
+              workspace: user.workspace,
               type: "EXPENSE",
               description: `${data.description} ${idx + 1}/${data.installmentsCount}`,
               amount,
@@ -117,6 +119,7 @@ export async function createTransaction(raw: TransactionInput) {
       const recurring = await prisma.recurringTransaction.create({
         data: {
           userId: user.id,
+          workspace: user.workspace,
           description: data.description,
           amount: data.amount,
           type: data.type,
@@ -145,6 +148,7 @@ export async function createTransaction(raw: TransactionInput) {
         prisma.transaction.create({
           data: {
             userId: user.id,
+            workspace: user.workspace,
             type: data.type,
             description: data.description,
             amount: data.amount,
@@ -176,7 +180,7 @@ export async function updateTransaction(id: string, raw: TransactionInput) {
   try {
     const user = await requireUser();
     const data = parseInput(transactionSchema, raw);
-    const existing = await prisma.transaction.findFirst({ where: { id, userId: user.id } });
+    const existing = await prisma.transaction.findFirst({ where: { id, userId: user.id, workspace: user.workspace } });
     if (!existing) throw new Error("Lançamento não encontrado");
 
     let creditCardId: string | null = null;
@@ -185,7 +189,7 @@ export async function updateTransaction(id: string, raw: TransactionInput) {
     let card: { closingDay: number; dueDay: number } | null = null;
 
     if (data.paymentMethod === "CREDITO" && raw.creditCardId) {
-      const found = await prisma.creditCard.findFirst({ where: { id: raw.creditCardId, userId: user.id } });
+      const found = await prisma.creditCard.findFirst({ where: { id: raw.creditCardId, userId: user.id, workspace: user.workspace } });
       if (!found) throw new Error("Cartão inválido");
       card = found;
       creditCardId = found.id;
@@ -242,7 +246,7 @@ export async function updateTransaction(id: string, raw: TransactionInput) {
         const deltaMonths = (newDate.getFullYear() - existing.date.getFullYear()) * 12 + (newDate.getMonth() - existing.date.getMonth());
         if (deltaMonths !== 0) {
           const siblings = await tx.transaction.findMany({
-            where: { installmentPurchaseId: existing.installmentPurchaseId, userId: user.id, id: { not: id } },
+            where: { installmentPurchaseId: existing.installmentPurchaseId, userId: user.id, workspace: user.workspace, id: { not: id } },
           });
           for (const sibling of siblings) {
             const siblingDate = addPeriod(sibling.date, "MENSAL", deltaMonths);
@@ -265,7 +269,7 @@ export async function updateTransaction(id: string, raw: TransactionInput) {
 export async function deleteTransaction(id: string) {
   try {
     const user = await requireUser();
-    await prisma.transaction.deleteMany({ where: { id, userId: user.id } });
+    await prisma.transaction.deleteMany({ where: { id, userId: user.id, workspace: user.workspace } });
     revalidatePath("/", "layout");
   } catch (err) {
     if (err instanceof Error) return { error: err.message };
@@ -276,7 +280,7 @@ export async function deleteTransaction(id: string) {
 export async function toggleTransactionStatus(id: string, status: "PAGO" | "PENDENTE" | "AGENDADO") {
   try {
     const user = await requireUser();
-    await prisma.transaction.updateMany({ where: { id, userId: user.id }, data: { status } });
+    await prisma.transaction.updateMany({ where: { id, userId: user.id, workspace: user.workspace }, data: { status } });
     revalidatePath("/", "layout");
   } catch (err) {
     if (err instanceof Error) return { error: err.message };

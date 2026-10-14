@@ -15,13 +15,13 @@ export default async function ReceitasPrevistasPage({ searchParams }: { searchPa
   const monthTo = new Date(year, month, 0, 23, 59, 59, 999);
 
   const expectedIncomes = await prisma.expectedIncome.findMany({
-    where: { userId: user.id, ...(isAllMonths ? {} : { date: { gte: monthFrom, lte: monthTo } }) },
+    where: { userId: user.id, workspace: user.workspace, ...(isAllMonths ? {} : { date: { gte: monthFrom, lte: monthTo } }) },
     orderBy: { date: "asc" },
   });
 
   // Distingue "nunca cadastrou nenhuma" de "vazio só por causa do filtro de
   // mês", pra mostrar o empty state certo.
-  const hasAnyEver = expectedIncomes.length > 0 || (await prisma.expectedIncome.count({ where: { userId: user.id } })) > 0;
+  const hasAnyEver = expectedIncomes.length > 0 || (await prisma.expectedIncome.count({ where: { userId: user.id, workspace: user.workspace } })) > 0;
 
   return (
     <div className="space-y-6">

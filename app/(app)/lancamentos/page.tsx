@@ -37,6 +37,7 @@ export default async function LancamentosPage({ searchParams }: { searchParams: 
   const [transactions, categories, accounts, cards] = await Promise.all([
     getTransactions(
       user.id,
+      user.workspace,
       {
         query: sp.q,
         type: sp.type,
@@ -50,9 +51,9 @@ export default async function LancamentosPage({ searchParams }: { searchParams: 
       },
       { field: (sp.sort as TransactionSortField) ?? "date", direction: (sp.dir as SortDirection) ?? "desc" }
     ),
-    prisma.category.findMany({ where: { userId: user.id }, orderBy: { name: "asc" } }),
-    prisma.account.findMany({ where: { userId: user.id, archived: false }, orderBy: { name: "asc" } }),
-    prisma.creditCard.findMany({ where: { userId: user.id, archived: false }, orderBy: { name: "asc" } }),
+    prisma.category.findMany({ where: { userId: user.id, workspace: user.workspace }, orderBy: { name: "asc" } }),
+    prisma.account.findMany({ where: { userId: user.id, workspace: user.workspace, archived: false }, orderBy: { name: "asc" } }),
+    prisma.creditCard.findMany({ where: { userId: user.id, workspace: user.workspace, archived: false }, orderBy: { name: "asc" } }),
   ]);
 
   const totalIncome = round2(transactions.filter((t) => t.type === "INCOME").reduce((s, t) => s + t.amount, 0));
@@ -60,7 +61,7 @@ export default async function LancamentosPage({ searchParams }: { searchParams: 
 
   // Distingue "conta vazia de verdade" de "vazio só por causa do filtro/mês",
   // pra mostrar o empty state certo (CTA de criar vs. sugestão de ajustar filtro).
-  const hasAnyTransactionEver = transactions.length > 0 || (await prisma.transaction.count({ where: { userId: user.id } })) > 0;
+  const hasAnyTransactionEver = transactions.length > 0 || (await prisma.transaction.count({ where: { userId: user.id, workspace: user.workspace } })) > 0;
 
   return (
     <div className="space-y-6">

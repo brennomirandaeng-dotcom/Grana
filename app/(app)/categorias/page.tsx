@@ -5,8 +5,8 @@ import { CategoriesList } from "@/components/categorias/categories-list";
 export default async function CategoriasPage() {
   const user = await requireUser();
   const [categories, counts] = await Promise.all([
-    prisma.category.findMany({ where: { userId: user.id }, orderBy: { name: "asc" } }),
-    prisma.transaction.groupBy({ by: ["categoryId"], where: { userId: user.id, categoryId: { not: null } }, _count: { _all: true } }),
+    prisma.category.findMany({ where: { userId: user.id, workspace: user.workspace }, orderBy: { name: "asc" } }),
+    prisma.transaction.groupBy({ by: ["categoryId"], where: { userId: user.id, workspace: user.workspace, categoryId: { not: null } }, _count: { _all: true } }),
   ]);
 
   const countMap = Object.fromEntries(counts.map((c) => [c.categoryId as string, c._count._all]));
